@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Information about registered users and their admin roles.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique identifier for the user." },
+        "email": { "type": "string", "format": "email", "description": "User's email address." },
+        "displayName": { "type": "string", "description": "User's public display name." },
+        "photoURL": { "type": "string", "description": "Public URL of the user's avatar." },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "Access levels for the user." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Time the profile was created." }
+      },
+      "required": ["uid", "email", "displayName", "photoURL", "role", "createdAt"]
+    },
+    "Post": {
+      "title": "Post Entry",
+      "description": "A Facebook-style status feed post with optionally attached media.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of the post." },
+        "content": { "type": "string", "description": "Rich status text of the post." },
+        "imageUrl": { "type": "string", "description": "Optional ImgBB uploaded image URL synced to cloud storage." },
+        "category": { "type": "string", "enum": ["All", "Anime", "Coding", "Dhaka"], "description": "General theme category of the post." },
+        "authorId": { "type": "string", "description": "UID of the user who published the post." },
+        "authorName": { "type": "string", "description": "Name of the author." },
+        "authorEmail": { "type": "string", "description": "Email address of the author." },
+        "authorAvatar": { "type": "string", "description": "Avatar URL of the author." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Time when the post was created." },
+        "lovesCount": { "type": "integer", "description": "Number of users who reacted to the post." },
+        "lovedBy": { "type": "array", "description": "List of user UIDs who loved this post." }
+      },
+      "required": ["id", "content", "category", "authorId", "authorName", "authorEmail", "authorAvatar", "createdAt", "lovesCount", "lovedBy"]
+    },
+    "Comment": {
+      "title": "Post Comment",
+      "description": "Represents single user comment under a main post.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique comment ID." },
+        "postId": { "type": "string", "description": "Parent post identification." },
+        "content": { "type": "string", "description": "The comment message." },
+        "authorId": { "type": "string", "description": "UID of user who commented." },
+        "authorName": { "type": "string", "description": "Display name of commenter." },
+        "authorEmail": { "type": "string", "description": "Email address of commenter." },
+        "authorAvatar": { "type": "string", "description": "Avatar URL of commenter." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Time comment was created." }
+      },
+      "required": ["id", "postId", "content", "authorId", "authorName", "authorEmail", "authorAvatar", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Public and private metadata for user profiles."
+    },
+    "posts/{postId}": {
+      "schema": "Post",
+      "description": "High-fidelity Facebook-style stream of posts."
+    },
+    "posts/{postId}/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Subcollection of comments corresponding to the parent post document."
+    }
+  }
+}

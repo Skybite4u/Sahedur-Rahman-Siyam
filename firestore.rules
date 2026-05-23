@@ -1,0 +1,121 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Catch-All safety net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Hardened Global Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && (
+        request.auth.token.email_verified == true || 
+        request.auth.token.email == 'siyamrahman1268@gmail.com'
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+             request.auth.token.email == 'siyamrahman1268@gmail.com' && 
+             request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Accessors for easy read
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() <= 128 && data.uid == request.auth.uid
+        && data.email is string && data.email.size() <= 200
+        && data.displayName is string && data.displayName.size() <= 120
+        && data.photoURL is string && data.photoURL.size() <= 1000
+        && data.role is string && (data.role == 'user' || (data.role == 'admin' && data.email == 'siyamrahman1268@gmail.com'))
+        && data.keys().hasAll(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt'])
+        && data.keys().size() == 6;
+    }
+
+    function isValidPost(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 3000
+        && data.category is string && (data.category == 'All' || data.category == 'Anime' || data.category == 'Coding' || data.category == 'Dhaka')
+        && data.authorId is string && data.authorId.size() <= 128
+        && data.authorName is string && data.authorName.size() <= 150
+        && data.authorEmail is string && data.authorEmail.size() <= 200
+        && data.authorAvatar is string && data.authorAvatar.size() <= 1000
+        && data.lovesCount is int
+        && data.lovedBy is list
+        && (data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 1000))
+        && data.keys().hasAll(['id', 'content', 'category', 'authorId', 'authorName', 'authorEmail', 'authorAvatar', 'createdAt', 'lovesCount', 'lovedBy'])
+        && (data.keys().size() == 10 || (data.keys().size() == 11 && data.keys().hasAll(['imageUrl'])));
+    }
+
+    function isValidComment(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.postId is string && data.postId.size() <= 128
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 1200
+        && data.authorId is string && data.authorId.size() <= 128
+        && data.authorName is string && data.authorName.size() <= 150
+        && data.authorEmail is string && data.authorEmail.size() <= 200
+        && data.authorAvatar is string && data.authorAvatar.size() <= 1000
+        && data.keys().hasAll(['id', 'postId', 'content', 'authorId', 'authorName', 'authorEmail', 'authorAvatar', 'createdAt'])
+        && data.keys().size() == 8;
+    }
+
+    // --- Collections Configurations ---
+
+    // A. Users Collection
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && (isAdmin() || userId == request.auth.uid);
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && incoming().role == existing().role;
+      allow delete: if isAdmin();
+    }
+
+    // B. Posts Collection
+    match /posts/{postId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && isVerified() && isValidId(postId) && isValidPost(incoming()) && (incoming().authorId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && isVerified() && (
+        // Regular update of text/category by original author (must keep identity same)
+        (existing().authorId == request.auth.uid && isValidPost(incoming()) && incoming().authorId == existing().authorId && incoming().createdAt == existing().createdAt) ||
+        // Reaction action (can only change reactions - lovesCount and lovedBy lists)
+        (incoming().diff(existing()).affectedKeys().hasOnly(['lovedBy', 'lovesCount']) && incoming().lovedBy.size() <= 500) ||
+        // Admin supreme overrides
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (existing().authorId == request.auth.uid || isAdmin());
+
+      // C. Comments Subcollection
+      match /comments/{commentId} {
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn() && isVerified() && isValidId(commentId) && isValidComment(incoming()) && (incoming().authorId == request.auth.uid || isAdmin()) && exists(/databases/$(database)/documents/posts/$(postId));
+        allow update: if isSignedIn() && isVerified() && (
+          (existing().authorId == request.auth.uid && isValidComment(incoming()) && incoming().authorId == existing().authorId && incoming().createdAt == existing().createdAt) ||
+          isAdmin()
+        );
+        allow delete: if isSignedIn() && (
+          existing().authorId == request.auth.uid || 
+          isAdmin() || 
+          get(/databases/$(database)/documents/posts/$(postId)).data.authorId == request.auth.uid
+        );
+      }
+    }
+  }
+}
