@@ -83,7 +83,12 @@ export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToa
   const [posts, setPosts] = useState<Post[]>([]);
   const [postContent, setPostContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Anime' | 'Coding' | 'Dhaka'>('Coding');
-  const [activeTabFilter, setActiveTabFilter] = useState<'All' | 'Anime' | 'Coding' | 'Dhaka'>('All');
+  const [activeTabFilter, setActiveTabFilter] = useState<'All' | 'Anime' | 'Coding' | 'Dhaka'>(() => {
+    const saved = localStorage.getItem('siyam_active_tab_filter');
+    return (saved === 'All' || saved === 'Anime' || saved === 'Coding' || saved === 'Dhaka')
+      ? saved
+      : 'All';
+  });
   
   // Imgbb image selection state
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
@@ -422,7 +427,10 @@ export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToa
           {(['All', 'Anime', 'Coding', 'Dhaka'] as const).map((cat) => (
             <button
               key={cat}
-              onClick={() => setActiveTabFilter(cat)}
+              onClick={() => {
+                setActiveTabFilter(cat);
+                localStorage.setItem('siyam_active_tab_filter', cat);
+              }}
               className={`px-3 py-1.5 text-xs font-mono rounded-lg transition-all cursor-pointer ${
                 activeTabFilter === cat 
                   ? 'bg-cyan-500 text-[#02050E] font-bold shadow-lg shadow-cyan-500/20' 

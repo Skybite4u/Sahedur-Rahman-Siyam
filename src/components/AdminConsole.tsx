@@ -7,7 +7,8 @@ import {
   updateDoc,
   query,
   getDocs,
-  writeBatch
+  writeBatch,
+  setDoc
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { Post, Comment, UserProfile } from '../types';
@@ -25,7 +26,9 @@ import {
   Settings, 
   PlusCircle, 
   Activity, 
-  Grid 
+  Grid,
+  History,
+  Clock
 } from 'lucide-react';
 
 interface AdminConsoleProps {
@@ -36,11 +39,15 @@ interface AdminConsoleProps {
 }
 
 export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSandboxMode }: AdminConsoleProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'posts' | 'comments' | 'diagnostics'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'posts' | 'comments' | 'diagnostics' | 'logs'>('users');
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [postsList, setPostsList] = useState<Post[]>([]);
   const [commentsMap, setCommentsMap] = useState<{ [postId: string]: Comment[] }>({});
   const [loading, setLoading] = useState(true);
+
+  // Audit activity log state tracking
+  const [localLogs, setLocalLogs] = useState<any[]>([]);
+  const [cloudLogsCache, setCloudLogsCache] = useState<any[]>([]);
 
   // Inline editting state for Admin overrides
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -52,6 +59,104 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
   // Sandbox simulation triggers
   const [localUsers, setLocalUsers] = useState<UserProfile[]>([]);
   const [localPosts, setLocalPosts] = useState<Post[]>([]);
+
+  // Load audit logs and register real-time logs listeners on mount
+  useEffect(() => {
+    // 1. Sandbox Logs Loading
+    const storedSandbox = localStorage.getItem('siyam_sandbox_audit_logs');
+    if (storedSandbox) {
+      setLocalLogs(JSON.parse(storedSandbox));
+    } else {
+      const initialSandbox = [
+        {
+          id: 'log_sandbox_init',
+          action: 'LOG_INIT',
+          details: 'Initialized secure local state tracker. Offline testing bypass active.',
+          performedBy: 'siyamrahman1268@gmail.com',
+          timestamp: new Date(Date.now() - 600000).toISOString(),
+          mode: 'sandbox'
+        }
+      ];
+      localStorage.setItem('siyam_sandbox_audit_logs', JSON.stringify(initialSandbox));
+      setLocalLogs(initialSandbox);
+    }
+
+    // 2. Cloud Logs Cache
+    const storedCloud = localStorage.getItem('siyam_cloud_audit_logs_cache');
+    if (storedCloud) {
+      setCloudLogsCache(JSON.parse(storedCloud));
+    }
+
+    if (!isSandboxMode) {
+      try {
+        const q = query(collection(db, 'audit_logs'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          const cloudData: any[] = [];
+          snapshot.forEach((doc) => {
+            const d = doc.data();
+            cloudData.push({
+              id: doc.id,
+              action: d.action || 'ACTION',
+              details: d.details || '',
+              performedBy: d.performedBy || 'Unknown Admin',
+              timestamp: d.timestamp || new Date().toISOString(),
+              mode: 'cloud'
+            });
+          });
+          // Sort descending
+          cloudData.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          setCloudLogsCache(cloudData);
+          localStorage.setItem('siyam_cloud_audit_logs_cache', JSON.stringify(cloudData));
+        }, (err) => {
+          console.warn("Firestore audit_logs snapshot closed (Permission or rule restriction). Falling back to local cache storage.", err);
+        });
+        return () => unsubscribe();
+      } catch (e) {
+        console.warn("Firestore collection initializer failed:", e);
+      }
+    }
+  }, [isSandboxMode]);
+
+  // Helper action logger helper
+  const addAuditLog = async (action: string, details: string) => {
+    const adminEmail = currentUser?.email || 'siyamrahman1268@gmail.com';
+    const newLog = {
+      id: `log_${Date.now()}`,
+      action,
+      details,
+      performedBy: adminEmail,
+      timestamp: new Date().toISOString(),
+      mode: isSandboxMode ? 'sandbox' : 'cloud'
+    };
+
+    if (isSandboxMode) {
+      const stored = localStorage.getItem('siyam_sandbox_audit_logs');
+      const list = stored ? JSON.parse(stored) : [];
+      const updated = [newLog, ...list].slice(0, 100);
+      localStorage.setItem('siyam_sandbox_audit_logs', JSON.stringify(updated));
+      setLocalLogs(updated);
+    } else {
+      try {
+        // Log to Firebase
+        const logRef = doc(collection(db, 'audit_logs'));
+        await setDoc(logRef, {
+          id: logRef.id,
+          action,
+          details,
+          performedBy: adminEmail,
+          timestamp: new Date().toISOString()
+        });
+      } catch (e: any) {
+        console.warn("Firestore logs write blocked (Missing collection/permissions rules matching):", e);
+      }
+      // Always store locally on machine to display instantly
+      const storedCloud = localStorage.getItem('siyam_cloud_audit_logs_cache');
+      const list = storedCloud ? JSON.parse(storedCloud) : [];
+      const updated = [newLog, ...list].slice(0, 50);
+      localStorage.setItem('siyam_cloud_audit_logs_cache', JSON.stringify(updated));
+      setCloudLogsCache(updated);
+    }
+  };
 
   // Fetch registered user profiles
   useEffect(() => {
@@ -282,6 +387,7 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
       setUsersList(mockUsers);
       setPostsList(mockPosts);
 
+      addAuditLog('BOOTSTRAP', 'Bootstrapped Sandbox database schemas with default mock users and posts stream');
       triggerToast("Sandbox Boostrapped", "Demo databases pre-populated with default student records successfully!", "success");
     } else {
       triggerToast("Bootstrap Blocked", "Bootstrapping default profiles can only be tested under Demo Sandbox Mode to prevent polluting the live database production files", "info");
@@ -300,10 +406,12 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
       const nextUsers = usersList.filter(u => u.uid !== profileId);
       localStorage.setItem('siyam_sandbox_users', JSON.stringify(nextUsers));
       setUsersList(nextUsers);
+      addAuditLog('DELETE_USER', `Erazed mock user profile ID: ${profileId} from Sandbox db`);
       triggerToast("Mock Erased", "User profile details deleted from mock sandbox storage.", "success");
     } else {
       try {
         await deleteDoc(doc(db, 'users', profileId));
+        addAuditLog('DELETE_USER', `Permanently deleted user profile ID: ${profileId} from Live Firestore`);
         triggerToast("Profile Erased", "Document removed from the cloud database securely.", "success");
       } catch (err: any) {
         triggerToast("Delete Failed", err?.message || 'Access denied', "error");
@@ -329,6 +437,7 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
       localStorage.setItem('siyam_sandbox_users', JSON.stringify(nextUsers));
       setUsersList(nextUsers);
       setEditingUserId(null);
+      addAuditLog('UPDATE_USER', `Updated mock user profile UID: ${userId} to name: "${editingUserName}"`);
       triggerToast("Mock Saved", "Profile updated inside sandbox memory storage.", "success");
     } else {
       try {
@@ -337,6 +446,7 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
           bio: editingUserBio
         });
         setEditingUserId(null);
+        addAuditLog('UPDATE_USER', `Updated Live Firestore user profile UID: ${userId} to name: "${editingUserName}"`);
         triggerToast("Profile Saved", "Firestore record updated recursively.", "success");
       } catch (err: any) {
         triggerToast("Save Failed", err?.message || 'Transaction aborted', "error");
@@ -352,10 +462,12 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
       const nextPosts = postsList.filter(p => p.id !== postId);
       localStorage.setItem('siyam_sandbox_posts', JSON.stringify(nextPosts));
       setPostsList(nextPosts);
+      addAuditLog('DELETE_POST', `Deleted mock post ID: ${postId} from Sandbox db`);
       triggerToast("Post Mock Erased", "Deleted post from local memory.", "success");
     } else {
       try {
         await deleteDoc(doc(db, 'posts', postId));
+        addAuditLog('DELETE_POST', `Permanently deleted Live Firestore post ID: ${postId}`);
         triggerToast("Post Deleted", "Firestore post document wiped out.", "success");
       } catch (err: any) {
         triggerToast("Action Denied", err?.message || 'Security override trigger', "error");
@@ -375,6 +487,7 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
       localStorage.setItem('siyam_sandbox_posts', JSON.stringify(nextPosts));
       setPostsList(nextPosts);
       setEditingPostId(null);
+      addAuditLog('UPDATE_POST', `Modified status description content for mock post ID: ${postId}`);
       triggerToast("Mock Updated", "Inline content post details saved.", "success");
     } else {
       try {
@@ -382,6 +495,7 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
           content: editingPostContent
         });
         setEditingPostId(null);
+        addAuditLog('UPDATE_POST', `Updated status description content for Live Firestore post ID: ${postId}`);
         triggerToast("Success", "Post updated live on server.", "success");
       } catch (err: any) {
         triggerToast("Error", err?.message || 'Access denied', "error");
@@ -395,10 +509,12 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
 
     if (isSandboxMode) {
       // Offline comments trigger
+      addAuditLog('DELETE_COMMENT', `Removed mock comment ID ${commentId} from Sandbox environment`);
       triggerToast("Demo comment removal", "Comment removed from demonstration viewport.", "success");
     } else {
       try {
         await deleteDoc(doc(db, 'posts', postId, 'comments', commentId));
+        addAuditLog('DELETE_COMMENT', `Permanently deleted Live comment ID ${commentId} from Firestore`);
         triggerToast("Deleted", "Comment wiped from subcollection.", "success");
         // Update local map state
         setCommentsMap(prev => ({
@@ -515,6 +631,14 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
         >
           <Activity className="w-4 h-4" />
           <span>Matrix Diagnostics</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('logs')}
+          className={`px-4.5 py-2.5 rounded-t-xl transition cursor-pointer flex items-center gap-2 font-bold ${activeTab === 'logs' ? 'bg-[#050812] border border-white/10 border-b-transparent text-amber-500' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+        >
+          <History className="w-4 h-4" />
+          <span>Audit Logs ({isSandboxMode ? localLogs.length : cloudLogsCache.length})</span>
         </button>
       </div>
 
@@ -835,9 +959,11 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
                         if (isSandboxMode) {
                           localStorage.removeItem('siyam_sandbox_users');
                           localStorage.removeItem('siyam_sandbox_posts');
+                          localStorage.removeItem('siyam_sandbox_audit_logs');
                           setUsersList([]);
                           setPostsList([]);
-                          triggerToast("Sandbox Purged", "Demo state cleared from browser cache.", "info");
+                          setLocalLogs([]);
+                          triggerToast("Sandbox Purged", "Demo state and activity records cleared from browser cache.", "info");
                         } else {
                           triggerToast("Action Blocked", "Live Firestore sweeps can only be performed by direct command script tools or the Firebase console", "error");
                         }
@@ -856,6 +982,129 @@ export default function AdminConsole({ currentUser, isAdmin, triggerToast, isSan
                       Verify Document Integrity
                     </button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* AUDIT LOGS PAGE */}
+            {activeTab === 'logs' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-950/40 p-5 rounded-2xl border border-white/5">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-amber-500 font-mono tracking-wide uppercase flex items-center gap-1.5 leading-none">
+                      <History className="w-4 h-4" /> SECURE AUDIT TRAIL LOGS
+                    </h3>
+                    <p className="text-xs text-slate-400 font-sans leading-normal">
+                      Security events, index deletions, and metadata records executed by authenticated operators.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    <button
+                      onClick={() => {
+                        if (isSandboxMode) {
+                          localStorage.removeItem('siyam_sandbox_audit_logs');
+                          setLocalLogs([]);
+                          triggerToast("Sandbox Logs Reseted", "Emptied offline sandbox audit logs trace.", "info");
+                        } else {
+                          localStorage.removeItem('siyam_cloud_audit_logs_cache');
+                          setCloudLogsCache([]);
+                          triggerToast("Logs Cache Emptied", "Cleaned local viewports cache.", "info");
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 hover:border-red-500/50 text-red-400 font-mono text-[10px] uppercase font-bold rounded-lg cursor-pointer transition flex items-center gap-1.5"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Clear Local Timeline
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
+                  <div className="bg-slate-950/30 p-4 rounded-xl border border-white/5 space-y-1">
+                    <span className="text-slate-500 block uppercase text-[10px] tracking-wider font-semibold">Environment Mode</span>
+                    <span className={`text-[13px] font-bold ${isSandboxMode ? 'text-amber-400' : 'text-cyan-400'}`}>
+                      {isSandboxMode ? '🔒 Sandbox Test Database' : '⚡ Live Cloud Production'}
+                    </span>
+                  </div>
+                  <div className="bg-slate-950/30 p-4 rounded-xl border border-white/5 space-y-1">
+                    <span className="text-slate-500 block uppercase text-[10px] tracking-wider font-semibold">Active Auth Operator</span>
+                    <span className="text-[13px] text-slate-300 font-bold block truncate">
+                      {currentUser?.email || 'siyamrahman1268@gmail.com'}
+                    </span>
+                  </div>
+                  <div className="bg-slate-950/30 p-4 rounded-xl border border-white/5 space-y-1">
+                    <span className="text-slate-500 block uppercase text-[10px] tracking-wider font-semibold">Active Event Stream</span>
+                    <span className="text-[13px] text-emerald-400 font-bold font-mono">
+                      {isSandboxMode ? localLogs.length : cloudLogsCache.length} Operations Indexed
+                    </span>
+                  </div>
+                </div>
+
+                {/* Audit table/list of logs */}
+                <div className="space-y-3.5 pb-2">
+                  {((isSandboxMode ? localLogs : cloudLogsCache).length === 0) ? (
+                    <div className="py-12 text-center rounded-2xl bg-[#030610] border border-white/5 font-mono text-xs text-slate-500 space-y-2">
+                      <Clock className="w-7 h-7 mx-auto text-slate-600 animate-pulse" />
+                      <p>No administrative activities have been logged yet or timeline is empty.</p>
+                      <p className="text-[10px] text-slate-600">Operations performed in this console session are captured in high-fidelity sandbox.</p>
+                    </div>
+                  ) : (
+                    (isSandboxMode ? localLogs : cloudLogsCache).map((item: any, idx: number) => {
+                      const act = item.action || '';
+                      let badgeColor = "text-cyan-400 bg-cyan-950/20 border-cyan-500/20";
+                      let actionIcon = <Activity className="w-4 h-4" />;
+
+                      if (act.includes('DELETE_POST')) {
+                        badgeColor = "text-rose-450 text-red-400 bg-red-950/20 border-red-500/20";
+                        actionIcon = <Trash2 className="w-4 h-4" />;
+                      } else if (act.includes('DELETE_USER')) {
+                        badgeColor = "text-orange-400 bg-orange-950/20 border-orange-500/20";
+                        actionIcon = <Users className="w-4 h-4" />;
+                      } else if (act.includes('UPDATE_USER') || act.includes('UPDATE_POST')) {
+                        badgeColor = "text-amber-400 bg-amber-950/20 border-amber-500/20";
+                        actionIcon = <Edit className="w-4 h-4" />;
+                      } else if (act.includes('BOOTSTRAP') || act.includes('LOG_INIT')) {
+                        badgeColor = "text-emerald-400 bg-emerald-900/20 border-emerald-500/20";
+                        actionIcon = <Shield className="w-4 h-4" />;
+                      }
+
+                      return (
+                        <div 
+                          key={item.id || idx} 
+                          className="flex items-start gap-4 p-4 rounded-xl bg-[#030610] border border-white/5 hover:border-white/10 transition leading-normal text-left sm:items-center animate-fade-in"
+                        >
+                          <div className={`p-2 rounded-lg border flex-shrink-0 ${badgeColor}`}>
+                            {actionIcon}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                              <span className={`font-mono text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border inline-block w-fit ${badgeColor}`}>
+                                {item.action}
+                              </span>
+                              <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-500">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>{new Date(item.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                                <span>&middot;</span>
+                                <span>{new Date(item.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                              </div>
+                            </div>
+                            
+                            <p className="text-xs text-slate-200 font-sans font-light leading-relaxed">
+                              {item.details}
+                            </p>
+                            
+                            <div className="flex items-center gap-1 text-[9px] font-mono text-slate-500">
+                              <span className="text-slate-600">PERFORMED BY:</span>
+                              <span className="text-slate-300 font-semibold">{item.performedBy}</span>
+                              {item.performedBy === 'siyamrahman1268@gmail.com' && (
+                                <span className="text-cyan-400 border border-cyan-500/10 px-1 rounded text-[8px] uppercase tracking-widest font-bold">SUPREME ADMIN</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}
