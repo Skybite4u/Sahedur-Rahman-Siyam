@@ -1,0 +1,1373 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sahedur Rahman Siyam &middot; Developer Portfolio</title>
+    
+    <!-- Favicon: High-quality modern user symbol SVG -->
+    <link rel="icon" type="image/svg+xml" href="https://api.dicebear.com/7.x/pixel-art/svg?seed=Siyam&backgroundColor=0f172a" />
+    
+    <!-- Google Fonts: Space Grotesk (Tech modern) & Inter (Clean UI) & JetBrains Mono (Tech logs) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Tailwind CSS v3.4 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons Library for elegant UI vector glyphs -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+      // Tailwind configuration setting custom typography, glass blurs, and floating animations
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+              display: ['"Space Grotesk"', 'sans-serif'],
+            },
+            animation: {
+              'pulse-slow': 'pulse 7s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'float-slow': 'float 12s ease-in-out infinite',
+              'float-reverse': 'float-rev 15s ease-in-out infinite',
+              'sparkle': 'sparkle 1.5s ease-in-out infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0px) scale(1)' },
+                '50%': { transform: 'translateY(-16px) scale(1.04)' },
+              },
+              'float-rev': {
+                '0%, 100%': { transform: 'translateY(0px) scale(1.03)' },
+                '50%': { transform: 'translateY(16px) scale(0.97)' },
+              },
+              sparkle: {
+                '0%, 100%': { opacity: '0.6', transform: 'scale(1)' },
+                '50%': { opacity: '1', transform: 'scale(1.15)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Custom glassmorphism, glowing borders, custom elegant scrollbar, and modern overrides -->
+    <style>
+      ::selection {
+        background-color: rgba(6, 182, 212, 0.35);
+        color: #fff;
+      }
+      
+      /* Premium custom-scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #050811;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 9999px;
+        border: 2px solid #050811;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(6, 182, 212, 0.45);
+      }
+      
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Liquid Glass Glassmorphic look requested by user */
+      .glass-panel {
+        background: rgba(13, 18, 33, 0.55);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 35px 0 rgba(0, 0, 0, 0.45);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .glass-panel:hover {
+        border-color: rgba(255, 255, 255, 0.16);
+        box-shadow: 0 15px 45px 0 rgba(0, 0, 0, 0.6);
+      }
+
+      /* Active custom high-contrast glass card style (more glossy) */
+      .glass-accent-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 32px 0 rgba(6, 182, 212, 0.05);
+      }
+
+      .glass-input {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #fff;
+        transition: all 0.25s ease-in-out;
+      }
+      
+      .glass-input:focus {
+        background: rgba(255, 255, 255, 0.07);
+        outline: none;
+        border-color: rgba(6, 182, 212, 0.5);
+        box-shadow: 0 0 14px rgba(6, 182, 212, 0.2);
+      }
+
+      /* Glowing custom parameters on Root for Accent Themes */
+      :root {
+        --accent-color: #06b6d4; /* Default: Cyan-500 */
+        --accent-glow: rgba(6, 182, 212, 0.35);
+        --accent-gradient: linear-gradient(135deg, #22d3ee, #3b82f6);
+      }
+
+      /* Interactive state accents mapping */
+      .neon-border {
+        border-color: rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease;
+      }
+      .neon-border:hover {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 16px var(--accent-glow);
+      }
+
+      .neon-glow-btn {
+        background: var(--accent-gradient);
+        box-shadow: 0 4px 20px var(--accent-glow);
+        transition: all 0.25s ease;
+      }
+      .neon-glow-btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+        box-shadow: 0 6px 24px var(--accent-glow);
+      }
+
+      .text-glowing {
+        text-shadow: 0 0 12px var(--accent-glow);
+      }
+    </style>
+  </head>
+  <body class="bg-[#02050E] text-slate-100 font-sans min-h-screen overflow-x-hidden relative">
+    
+    <!-- DYNAMIC BACKGROUND LIGHT SYSTEM -->
+    <div class="fixed top-[-10%] left-[-15%] w-[55vw] h-[55vw] rounded-full bg-cyan-900/10 blur-[130px] pointer-events-none animate-float-slow -z-10"></div>
+    <div class="fixed bottom-[-10%] right-[-15%] w-[60vw] h-[60vw] rounded-full bg-fuchsia-950/10 blur-[150px] pointer-events-none animate-float-reverse -z-10"></div>
+    <div id="ambient-color-spot" class="fixed top-[30%] left-[30%] w-[45vw] h-[45vw] rounded-full bg-indigo-950/10 blur-[140px] pointer-events-none -z-10"></div>
+
+    <!-- NOTIFICATION SYSTEM FRAME -->
+    <div id="toast-wrapper" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 max-w-sm w-full px-4 sm:px-0"></div>
+
+    <!-- ULTRA LIGHTBOX INTERACTIVE COMPONENT -->
+    <div id="image-lightbox" class="fixed inset-0 bg-black/95 backdrop-blur-md z-[90] hidden flex-col items-center justify-center p-4">
+      <button onclick="dismissLightbox()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition bg-white/5 p-3 rounded-full hover:bg-white/10" title="Close Overlay (Esc)">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+      <div class="max-w-5xl w-full max-h-[80vh] flex items-center justify-center p-2 relative">
+        <img id="lightbox-full-img" class="max-w-full max-h-[75vh] object-contain rounded-xl border border-white/10 shadow-2xl" src="" alt="Live Media Asset" />
+      </div>
+      <div class="mt-4 flex flex-col items-center text-center gap-3 max-w-lg w-full">
+        <p id="lightbox-slug" class="text-xs text-slate-300 font-mono bg-white/5 px-4 py-1.5 rounded-full border border-white/5"></p>
+        <div class="flex gap-2">
+          <button id="lightbox-clipboard" class="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 transition bg-cyan-950/40 px-3 py-1.5 rounded border border-cyan-800/50 cursor-pointer">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Public URL
+          </button>
+          <a id="lightbox-external" target="_blank" href="#" class="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition bg-white/5 px-3 py-1.5 rounded border border-white/10">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i> External CDN
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVBAR HEADER -->
+    <header class="sticky top-0 z-50 w-full bg-[#02050E]/70 backdrop-blur-lg border-b border-white/5">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+        
+        <!-- Branding Logo representation mapping user: Siyam -->
+        <a href="#" class="flex items-center gap-3 group">
+          <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-600 p-[1.5px] shadow-lg shadow-cyan-500/10 group-hover:shadow-cyan-500/20 transition-all duration-300">
+            <div class="w-full h-full bg-[#050917] rounded-[10px] flex items-center justify-center">
+              <span class="text-xs sm:text-sm font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400">&lt;S/&gt;</span>
+            </div>
+          </div>
+          <div class="flex flex-col text-left">
+            <span class="text-white font-display text-sm sm:text-base font-bold tracking-tight">Sahedur Rahman Siyam</span>
+            <span class="text-cyan-500 font-mono text-[9px] sm:text-[10px] uppercase tracking-widest font-semibold"> Dhaka, BD &middot; Student</span>
+          </div>
+        </a>
+
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center gap-1 bg-white/[0.03] border border-white/5 px-3.5 py-1.5 rounded-full backdrop-blur-md">
+          <a href="#about" class="px-3 py-1 text-xs sm:text-sm text-slate-300 hover:text-white transition rounded-full hover:bg-white/5 font-medium">Home</a>
+          <a href="#feed" class="px-3 py-1 text-xs sm:text-sm text-slate-300 hover:text-white transition rounded-full hover:bg-white/5 font-medium">Siyam's Feed</a>
+          <a href="#gallery" class="px-3 py-1 text-xs sm:text-sm text-slate-300 hover:text-white transition rounded-full hover:bg-white/5 font-medium">Media Gallery</a>
+          <a href="#hobbies" class="px-3 py-1 text-xs sm:text-sm text-slate-300 hover:text-white transition rounded-full hover:bg-white/5 font-medium">My Hobbies</a>
+          <a href="#contact" class="px-3 py-1 text-xs sm:text-sm text-slate-300 hover:text-white transition rounded-full hover:bg-white/5 font-medium">Locate Me</a>
+        </nav>
+
+        <!-- Dynamic accent controls & mobile selector layout -->
+        <div class="flex items-center gap-3 sm:gap-4">
+          <!-- Interactive Accent Palette Changer -->
+          <div class="flex items-center gap-2 bg-slate-950/60 border border-white/5 px-2.5 py-1.5 rounded-full shadow-inner">
+            <button onclick="setGlobalAccent('cyan')" class="w-3.5 h-3.5 rounded-full bg-cyan-500 hover:scale-125 transition relative cursor-pointer" title="Cyber Cyan theme">
+              <span id="marker-cyan" class="absolute inset-0 border border-white rounded-full scale-100 transition-all"></span>
+            </button>
+            <button onclick="setGlobalAccent('rose')" class="w-3.5 h-3.5 rounded-full bg-rose-500 hover:scale-125 transition relative cursor-pointer" title="Cosmic Rose theme">
+              <span id="marker-rose" class="absolute inset-0 border border-white rounded-full scale-0 transition-all"></span>
+            </button>
+            <button onclick="setGlobalAccent('emerald')" class="w-3.5 h-3.5 rounded-full bg-emerald-500 hover:scale-125 transition relative cursor-pointer" title="Matrix Jade theme">
+              <span id="marker-emerald" class="absolute inset-0 border border-white rounded-full scale-0 transition-all"></span>
+            </button>
+          </div>
+
+          <!-- Direct Phone Dial Callout Option -->
+          <a href="tel:01703002699" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-slate-900 border border-white/10 px-3.5 py-1.5 rounded-full hover:bg-slate-800 hover:border-white/20 transition cursor-pointer">
+            <i data-lucide="phone" class="w-3.5 h-3.5 text-cyan-400"></i> Code Room Direct
+          </a>
+
+          <!-- Mobile Nav Toggle button -->
+          <button onclick="toggleMobileHeader()" class="md:hidden text-slate-300 hover:text-white p-1.5 sm:p-2" title="Toggle Navigation Header">
+            <i id="header-toggle-icon" data-lucide="menu" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile navigation panel -->
+      <div id="header-mobile-menu" class="hidden md:hidden absolute top-16 left-0 w-full bg-[#02050E]/95 border-b border-white/5 shadow-2xl p-6 flex flex-col gap-4 font-display">
+        <a onclick="toggleMobileHeader()" href="#about" class="text-base text-slate-300 hover:text-white py-2 border-b border-white/5 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> About Siyam</a>
+        <a onclick="toggleMobileHeader()" href="#feed" class="text-base text-slate-300 hover:text-white py-2 border-b border-white/5 flex items-center gap-2"><i data-lucide="rss" class="w-4 h-4"></i> Siyam's Feed</a>
+        <a onclick="toggleMobileHeader()" href="#gallery" class="text-base text-slate-300 hover:text-white py-2 border-b border-white/5 flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> Media Gallery</a>
+        <a onclick="toggleMobileHeader()" href="#hobbies" class="text-base text-slate-300 hover:text-white py-2 border-b border-white/5 flex items-center gap-2"><i data-lucide="heart" class="w-4 h-4"></i> Hobbies</a>
+        <a onclick="toggleMobileHeader()" href="#contact" class="text-base text-slate-300 hover:text-white py-2 flex items-center gap-2"><i data-lucide="phone-call" class="w-4 h-4"></i> Contact info</a>
+        <a href="tel:01703002699" class="w-full mt-2 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-600 text-center text-xs text-white font-medium flex items-center justify-center gap-2"><i data-lucide="phone" class="w-4 h-4"></i> Dial 01703002699</a>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT container -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-24 sm:space-y-32">
+
+      <!-- HERO BANNER SECTION (Siyam details & personal presentation) -->
+      <section id="about" class="min-h-[70vh] flex flex-col md:flex-row items-center justify-between gap-12 pt-4 text-left">
+        
+        <!-- Bio and personal layout text content -->
+        <div class="flex-1 space-y-6 relative">
+          
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+            <span class="text-[10px] sm:text-xs font-mono font-medium text-slate-300 tracking-wider uppercase">Class 12 Student &middot; Dhaka, BD</span>
+          </div>
+          
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold tracking-tight leading-none text-white">
+            Hello, I am <br />
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-rose-400 tracking-tight">
+              Sahedur Rahman Siyam
+            </span>
+          </h1>
+
+          <p class="text-sm sm:text-base text-slate-300 font-light max-w-xl leading-relaxed">
+            I am a Class 12 student living in Dhaka, Bangladesh, with a huge interest in coding, computing networks, and web development styles. Modern interfaces like this premium glassmorphism template fascinate me, and I love creating live interactive designs.
+          </p>
+
+          <!-- Real Local coordinates tag -->
+          <div class="flex items-center gap-4 text-xs font-mono text-slate-400">
+            <span class="flex items-center gap-1 bg-slate-900 px-3 py-1.5 rounded-md border border-white/5">
+              <i data-lucide="map-pin" class="w-4 h-4 text-cyan-400"></i> Dhaka, Bangladesh
+            </span>
+            <span class="flex items-center gap-1 bg-slate-900 px-3 py-1.5 rounded-md border border-white/5">
+              <i data-lucide="graduation-cap" class="w-4 h-4 text-fuchsia-400"></i> Class 12 Academics
+            </span>
+          </div>
+
+          <!-- Creative Hobbies list banner buttons -->
+          <div class="flex flex-wrap gap-2 pt-1">
+            <span class="px-3 py-1 text-xs font-mono bg-white/[0.02] border border-white/5 rounded-full text-cyan-400">#AnimeLover</span>
+            <span class="px-3 py-1 text-xs font-mono bg-white/[0.02] border border-white/5 rounded-full text-indigo-400">#K-DramaBinge</span>
+            <span class="px-3 py-1 text-xs font-mono bg-white/[0.02] border border-white/5 rounded-full text-emerald-400">#ActiveCoding</span>
+            <span class="px-3 py-1 text-xs font-mono bg-white/[0.02] border border-white/5 rounded-full text-rose-400">#GamingVids</span>
+          </div>
+
+          <!-- Active trigger CTAs -->
+          <div class="flex flex-wrap items-center gap-4 pt-3">
+            <a href="#feed" class="inline-flex items-center gap-2 text-xs sm:text-sm text-[#02050E] font-bold bg-gradient-to-r from-cyan-400 to-indigo-500 hover:opacity-90 active:scale-95 px-5 py-3 rounded-full shadow-lg shadow-cyan-500/10 transition cursor-pointer">
+              <i data-lucide="rss" class="w-4 h-4"></i> Visit Siyam's Feed
+            </a>
+            <a href="#gallery" class="inline-flex items-center gap-2 text-xs sm:text-sm text-slate-300 hover:text-white hover:bg-white/5 active:scale-95 px-4.5 py-3 rounded-full border border-white/10 transition cursor-pointer">
+              <i data-lucide="image" class="w-4 h-4"></i> View Media Locker
+            </a>
+          </div>
+        </div>
+
+        <!-- Premium Bento-styled tech setup mockup (Decorative glass canvas) -->
+        <div class="w-full md:w-[350px] lg:w-[390px] shrink-0">
+          <div class="glass-panel p-6 rounded-3xl border border-white/10 relative overflow-hidden flex flex-col gap-6">
+            <div class="absolute -top-10 -right-10 w-28 h-28 bg-cyan-500/20 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <!-- Mini bio display card styling -->
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-400 to-violet-500 flex items-center justify-center font-bold text-white text-lg font-display">
+                SRS
+              </div>
+              <div class="text-left">
+                <p class="text-xs font-mono text-cyan-400">CODENAME: SIYAM</p>
+                <p class="text-sm font-bold text-white tracking-wide">Ready for Next Leap</p>
+              </div>
+            </div>
+
+            <div class="space-y-3.5 text-left text-xs text-slate-300">
+              <div class="flex items-center gap-2 bg-white/[0.02] p-2.5 rounded-xl border border-white/5">
+                <i data-lucide="code" class="w-5 h-5 text-indigo-400"></i>
+                <div>
+                  <p class="font-bold text-slate-100">Coding Hobbyist</p>
+                  <p class="text-[11px] text-slate-400">Enjoys designing gorgeous responsive frontends.</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 bg-white/[0.02] p-2.5 rounded-xl border border-white/5">
+                <i data-lucide="tv" class="w-5 h-5 text-rose-400"></i>
+                <div>
+                  <p class="font-bold text-slate-100">Anime & Korean Drama enthusiast</p>
+                  <p class="text-[11px] text-slate-400">Fascinated by high emotional narrative arcs.</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 bg-white/[0.02] p-2.5 rounded-xl border border-white/5">
+                <i data-lucide="message-square" class="w-5 h-5 text-emerald-400"></i>
+                <div>
+                  <p class="font-bold text-slate-100">Direct Social Connectivity</p>
+                  <p class="text-[11px] text-slate-400">Active and responsive on messenger pipelines.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Custom statistics simulation to maintain premium layout aesthetics -->
+            <div class="grid grid-cols-2 gap-3 pt-3 border-t border-white/5 text-center">
+              <div class="bg-slate-950/40 p-2.5 rounded-xl border border-white/5">
+                <span class="block text-xl font-display font-extrabold text-white">Class 12</span>
+                <span class="text-[9px] text-slate-400 uppercase tracking-widest font-mono">Academic Status</span>
+              </div>
+              <div class="bg-slate-950/40 p-2.5 rounded-xl border border-white/5">
+                <span id="stat-posts-count" class="block text-xl font-display font-extrabold text-cyan-400">3</span>
+                <span class="text-[9px] text-slate-400 uppercase tracking-widest font-mono">Total Posts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FACEBOOK-STYLE POST SECTION (FEED) -->
+      <section id="feed" class="scroll-mt-24 space-y-8">
+        <div class="text-left space-y-2">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/40 text-cyan-400">
+            <i data-lucide="rss" class="w-3.5 h-3.5"></i>
+            <span class="text-[10px] font-mono tracking-wider font-semibold uppercase">Sahedur's Social Channel</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Interactive Siyam's Post Feed</h2>
+          <p class="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl">
+            A state-of-the-art Facebook-style posting feed integrated with the <span class="text-cyan-400 font-medium font-mono">Imgbb API</span>. Draft high-fidelity posts containing descriptive copy and direct cloud-hosted images which automatically persist in the feed below.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          <!-- ColumnLeft: Write & Publish Form -->
+          <div class="lg:col-span-5 space-y-6">
+            <div class="glass-panel p-5 sm:p-6 rounded-2xl border border-white/10 text-left relative overflow-hidden">
+              <h3 class="text-sm font-mono font-bold text-slate-300 uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-white/5 pb-2.5">
+                <i data-lucide="pen-tool" class="w-4 h-4 text-cyan-400"></i> Create New Event
+              </h3>
+
+              <!-- Imgbb API settings module within creator card -->
+              <div class="mb-4 bg-slate-950/60 p-3.5 rounded-xl border border-white/5 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-slate-400 tracking-wider">ImgBB Cloud API Connection:</span>
+                  <button onclick="toggleKeyReveal()" class="text-[10px] text-cyan-400 hover:underline flex items-center gap-0.5" title="Show / Hide current Key">
+                    <i data-lucide="eye" class="w-3 h-3"></i> Show Key
+                  </button>
+                </div>
+                <input type="password" id="custom-imgbb-key" class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500" placeholder="Active key: d2ff06... (Default Key Locked)" />
+                <p class="text-[9px] text-slate-500 leading-tight">By default, my preloaded key is utilized automatically. No setup needed!</p>
+              </div>
+
+              <!-- Post Form -->
+              <form id="creator-feed-form" onsubmit="event.preventDefault();" class="space-y-4">
+                
+                <div class="space-y-1.5">
+                  <label class="text-[10px] font-mono text-slate-400 uppercase tracking-widest" for="post-text-body">What's on your mind, Siyam?</label>
+                  <textarea id="post-text-body" rows="4" class="w-full p-3.5 rounded-xl glass-input text-xs sm:text-sm placeholder-slate-500" placeholder="Share your coding thoughts, anime recommendations, or current school updates..."></textarea>
+                </div>
+
+                <!-- Custom Drag & Drop image selection node -->
+                <div class="space-y-1.5">
+                  <span class="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Insert Image asset</span>
+                  <div id="feed-dropzone" class="relative group border border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-950/30 rounded-xl p-4.5 text-center transition cursor-pointer flex flex-col items-center justify-center gap-2">
+                    <input type="file" id="feed-file-selector" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" />
+                    <i data-lucide="image" class="w-5 h-5 text-slate-400 group-hover:text-cyan-400 transition-colors"></i>
+                    <p class="text-xs text-slate-300 pointer-events-none">Click or drag graphic to attach</p>
+                    <p class="text-[10px] text-slate-500 pointer-events-none">Autolink to ImgBB storage cloud</p>
+                  </div>
+                </div>
+
+                <!-- Image preview container inside publisher -->
+                <div id="publisher-img-preview-box" class="hidden bg-slate-950/80 p-2.5 rounded-xl border border-white/5 relative items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <img id="publisher-img-thumbnail" class="w-12 h-12 rounded object-cover border border-white/10" src="#" alt="Thumbnail" />
+                    <div class="text-left">
+                      <p id="publisher-img-name" class="text-xs text-slate-300 max-w-[140px] truncate font-mono">image.jpg</p>
+                      <p class="text-[10px] text-slate-500">Selected</p>
+                    </div>
+                  </div>
+                  <button type="button" onclick="cancelAttachedFile()" class="p-1.5 rounded-full hover:bg-white/10 text-red-400 hover:text-red-300" title="Remove attachment">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+
+                <!-- Live progress banner element for uploading -->
+                <div id="publish-cloud-progress" class="hidden bg-slate-950 rounded-xl p-3 border border-white/5">
+                  <div class="flex items-center justify-between text-xs mb-1.5">
+                    <span class="text-slate-300 font-medium flex items-center gap-1.5">
+                      <i data-lucide="loader" class="w-3.5 h-3.5 text-cyan-400 animate-spin"></i>
+                      Uploading to cloud CDN...
+                    </span>
+                    <span id="publish-percentage" class="font-mono text-cyan-400">0%</span>
+                  </div>
+                  <div class="w-full bg-slate-900 rounded-full h-1 overflow-hidden">
+                    <div id="publish-progress-fill" class="bg-gradient-to-r from-cyan-400 to-indigo-500 h-full w-[0%] transition-all duration-300"></div>
+                  </div>
+                </div>
+
+                <button type="button" onclick="executePublishPost()" class="w-full py-3 rounded-xl text-xs sm:text-sm font-semibold text-[#02050E] bg-gradient-to-r from-cyan-400 via-indigo-400 to-rose-400 hover:opacity-95 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2">
+                  <i data-lucide="send" class="w-4 h-4"></i> Post to Public Feed
+                </button>
+
+              </form>
+            </div>
+            
+            <!-- Quick stats widgets -->
+            <div class="glass-panel p-5 rounded-2xl border border-white/10 text-left space-y-3">
+              <div class="flex items-center gap-2 text-xs font-mono text-cyan-400"><i data-lucide="shield" class="w-4 h-4"></i> Secure Offline Sandbox</div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                If Imgbb API experiences high traffic, you can input your custom personal Key retrieved from ImgBB's profile workspace. No database setup needed.
+              </p>
+            </div>
+          </div>
+
+          <!-- ColumnRight: Dynamic Stream List -->
+          <div class="lg:col-span-7 space-y-6">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-base font-display font-medium text-white flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i> Active Conversation Stack
+              </h3>
+              <!-- Reset feed action -->
+              <button onclick="confirmResetFeedStream()" class="text-xs text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-1 cursor-pointer">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset to placeholders
+              </button>
+            </div>
+
+            <!-- DYNAMIC STREAM LIST TARGET PANEL -->
+            <div id="feed-items-container" class="space-y-6">
+              <!-- Elements injected by javascript dynamically -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SEPARATE PHOTO MEDIA GALLERY (FROSTED GLASS GRID OVERVIEW) -->
+      <section id="gallery" class="scroll-mt-24 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div class="text-left space-y-2">
+            <h2 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Cloud Media Vault</h2>
+            <p class="text-xs sm:text-sm text-slate-400">An auto-generated collection compiled dynamically from Siyam's cloud uploads.</p>
+          </div>
+          
+          <!-- Category Selector Filters -->
+          <div class="flex items-center gap-1.5 bg-slate-900/40 p-1 border border-white/5 rounded-xl self-start sm:self-auto overflow-x-auto max-w-full">
+            <button onclick="categoryFilterSwitch('All')" id="catfilter-All" class="px-3.5 py-1.5 text-xs font-mono rounded-lg bg-cyan-600 text-white font-medium transition cursor-pointer">All Photos</button>
+            <button onclick="categoryFilterSwitch('Anime')" id="catfilter-Anime" class="px-3.5 py-1.5 text-xs font-mono rounded-lg text-slate-400 hover:text-white transition cursor-pointer">Anime</button>
+            <button onclick="categoryFilterSwitch('Coding')" id="catfilter-Coding" class="px-3.5 py-1.5 text-xs font-mono rounded-lg text-slate-400 hover:text-white transition cursor-pointer">Coding</button>
+            <button onclick="categoryFilterSwitch('Dhaka')" id="catfilter-Dhaka" class="px-3.5 py-1.5 text-xs font-mono rounded-lg text-slate-400 hover:text-white transition cursor-pointer">Dhaka</button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between py-2 border-b border-white/5 text-xs font-mono text-slate-500">
+          <span id="gallery-counter">0 Active cloud-hosted pictures located</span>
+          <span class="text-[10px] text-cyan-400 uppercase tracking-widest font-semibold flex items-center gap-1"><i data-lucide="eye" class="w-3.5 h-3.5 animate-pulse"></i> Click photos to open Lightbox</span>
+        </div>
+
+        <!-- Empty Grid visual check -->
+        <div id="gallery-empty-spot" class="hidden glass-panel py-12 px-6 flex flex-col items-center justify-center text-center gap-4 border border-dashed border-white/10 rounded-2xl">
+          <div class="w-11 h-11 rounded-full bg-slate-900/60 border border-white/5 flex items-center justify-center text-slate-500">
+            <i data-lucide="image-off" class="w-5 h-5"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-300">No media indexed under this category</p>
+        </div>
+
+        <!-- Responsive layout responsive photographic elements -->
+        <div id="media-grid-workspace" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <!-- elements loaded via js stream -->
+        </div>
+
+      </section>
+
+      <!-- PERSONAL HOBBIES GRAPHICAL BENTO SECTION -->
+      <section id="hobbies" class="scroll-mt-24 space-y-8 text-left">
+        <div class="max-w-2xl space-y-2">
+          <h2 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Hobbies, Interests & Culture</h2>
+          <p class="text-xs sm:text-sm text-slate-400">
+            A closer look into how I allocate free hours. I enjoy narrative structures and visual editing systems as hobbies outside school context.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <!-- HOBBY 1 -->
+          <div class="glass-panel p-5 rounded-2xl border border-white/5 flex flex-col justify-between group">
+            <div class="space-y-4">
+              <div class="inline-flex p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 group-hover:scale-110 transition duration-300">
+                <i data-lucide="sparkles" class="w-5 h-5 text-orange-400"></i>
+              </div>
+              <h3 class="text-base font-display font-semibold text-white">Watching Anime</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Fascinated by high-quality anime storytelling. Big fan of psychological thriller, tactical magic, and epic fantasy narratives like Frieren.
+              </p>
+            </div>
+            <p class="text-[10px] font-mono text-orange-400 border-t border-white/5 pt-3 mt-4">FAVORITES: Shonen & Seinen</p>
+          </div>
+
+          <!-- HOBBY 2 -->
+          <div class="glass-panel p-5 rounded-2xl border border-white/5 flex flex-col justify-between group">
+            <div class="space-y-4">
+              <div class="inline-flex p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 group-hover:scale-110 transition duration-300">
+                <i data-lucide="code" class="w-5 h-5 text-cyan-400"></i>
+              </div>
+              <h3 class="text-base font-display font-semibold text-white">Full Stack Coding</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Writing neat frontend views and exploring API structures. Love designing dynamic offline systems using window caches and Indexed/LocalStorage.
+              </p>
+            </div>
+            <p class="text-[10px] font-mono text-cyan-400 border-t border-white/5 pt-3 mt-4">FAVORITES: JS, CSS Glassmorphism</p>
+          </div>
+
+          <!-- HOBBY 3 -->
+          <div class="glass-panel p-5 rounded-2xl border border-white/5 flex flex-col justify-between group">
+            <div class="space-y-4">
+              <div class="inline-flex p-3 rounded-xl bg-pink-500/10 border border-pink-500/20 group-hover:scale-110 transition duration-300">
+                <i data-lucide="film" class="w-5 h-5 text-pink-400"></i>
+              </div>
+              <h3 class="text-base font-display font-semibold text-white">K-Dramas & Movies</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Appreciating cozy cinematic production techniques. Enjoys romantic slice-of-life episodic titles as well as legal crime action cinema.
+              </p>
+            </div>
+            <p class="text-[10px] font-mono text-pink-400 border-t border-white/5 pt-3 mt-4">FAVORITES: Slice of Life, Thriller</p>
+          </div>
+
+          <!-- HOBBY 4 -->
+          <div class="glass-panel p-5 rounded-2xl border border-white/5 flex flex-col justify-between group">
+            <div class="space-y-4">
+              <div class="inline-flex p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition duration-300">
+                <i data-lucide="gamepad-2" class="w-5 h-5 text-emerald-400"></i>
+              </div>
+              <h3 class="text-base font-display font-semibold text-white">Watching Gaming</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Following gaming walkthrough videos, competitive strategic matches (FPS), and complex automation builds inside survival sandboxes.
+              </p>
+            </div>
+            <p class="text-[10px] font-mono text-emerald-400 border-t border-white/5 pt-3 mt-4">FAVORITES: Minecraft, Strategy Vids</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- CONTACT & DIAL CALLOUT AREA -->
+      <section id="contact" class="scroll-mt-24 max-w-2xl mx-auto space-y-8 text-left">
+        <div class="text-center space-y-2">
+          <h2 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Collaborate or Say Hi</h2>
+          <p class="text-xs sm:text-sm text-slate-400">Let's connect electronically or directly over cellular networks. Siyam is available for code chat!</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          
+          <!-- Contact Numbers Widget card -->
+          <div class="md:col-span-5 space-y-4">
+            <div class="glass-panel p-5 rounded-2xl border border-white/10 text-left space-y-4">
+              <h3 class="text-sm font-mono font-bold text-slate-300 uppercase tracking-wider">Fast Channels</h3>
+              
+              <div class="p-4 bg-slate-950/60 rounded-xl border border-white/5 space-y-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-cyan-950 text-cyan-400 flex items-center justify-center">
+                    <i data-lucide="phone" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <span class="block text-[10px] text-slate-500 font-mono tracking-widest uppercase">Direct cellular code</span>
+                    <a href="tel:01703002699" class="text-sm font-semibold text-white hover:text-cyan-400 transition">01703002699</a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-4 bg-emerald-950/40 rounded-xl border border-emerald-900/40 space-y-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-900 text-emerald-400 flex items-center justify-center">
+                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <span class="block text-[10px] text-emerald-500 font-mono tracking-widest uppercase">Instant WhatsApp pipeline</span>
+                    <a target="_blank" href="https://wa.me/8801703002699" class="text-xs font-semibold text-emerald-300 hover:underline">Chat on WhatsApp &rarr;</a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-4 bg-purple-950/20 rounded-xl border border-purple-900/10">
+                <p class="text-[11px] text-slate-400 leading-snug">
+                  Living and schooling in <span class="text-white">Dhaka, Bangladesh</span>. Available for quick calls or emails, especially during evenings & weekend sessions!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email Simulator Form -->
+          <div class="md:col-span-7">
+            <div class="glass-panel p-6 rounded-2xl border border-white/10">
+              <form id="contact-mail-form" onsubmit="event.preventDefault(); simulateContactFormTransmission();" class="space-y-4">
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-mono text-slate-400 uppercase tracking-wider block" for="form-sender-alias">Name</label>
+                  <input required type="text" id="form-sender-alias" class="w-full px-4 py-2.5 rounded-lg glass-input text-xs sm:text-sm" placeholder="e.g. Shakib Ahmed" />
+                </div>
+                
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-mono text-slate-400 uppercase tracking-wider block" for="form-sender-email">Email Envelope</label>
+                  <input required type="email" id="form-sender-email" class="w-full px-4 py-2.5 rounded-lg glass-input text-xs sm:text-sm" placeholder="e.g. shakib@dhaka.com" />
+                </div>
+
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-mono text-slate-400 uppercase tracking-wider block" for="form-mail-message">Signal Body (Message)</label>
+                  <textarea required id="form-mail-message" rows="3" class="w-full px-4 py-2.5 rounded-lg glass-input text-xs sm:text-sm resize-none" placeholder="Write Siyam a quick hello message or ask for coding advice..."></textarea>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold text-[#02050E] neon-glow-btn cursor-pointer flex items-center justify-center gap-2">
+                  <i data-lucide="mail" class="w-4 h-4"></i> Transmit Transmission Signal
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER SOCIAL BAR -->
+    <footer class="border-t border-white/5 bg-[#02050D] mt-24">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-left">
+        <div>
+          <p class="text-xs text-slate-400 font-mono">&copy; 2026 Sahedur Rahman Siyam &middot; Student & Web Creator.</p>
+          <p class="text-[10px] text-slate-600 font-mono mt-1">Single-File Premium Glassmorphism portfolio layout optimized for Vercel instant hosting.</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <a href="https://github.com" target="_blank" class="p-2 rounded-lg bg-white/[0.03] border border-white/5 text-slate-400 hover:text-white hover:border-white/10 transition" title="GitHub Repo">
+            <i data-lucide="github" class="w-4.5 h-4.5"></i>
+          </a>
+          <a href="tel:01703002699" class="p-2 rounded-lg bg-white/[0.03] border border-white/5 text-slate-400 hover:text-white hover:border-white/10 transition" title="Dial direct line">
+            <i data-lucide="phone-call" class="w-4.5 h-4.5"></i>
+          </a>
+          <a href="mailto:siyaamrahman1268@gmail.com" class="p-2 rounded-lg bg-white/[0.03] border border-white/5 text-slate-400 hover:text-white hover:border-white/10 transition" title="Mail me directly">
+            <i data-lucide="mail" class="w-4.5 h-4.5 font-bold"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- INTERACTIVE SCRIPTS -->
+    <script>
+      // Siyam's Default API Key fallback for seamless cloud uploading
+      const IMGBB_FALLBACK_API_KEY = 'd2ff06df719b10997aa7f11538097a16';
+      
+      // Load stored ImgBB setup or use above default
+      let activeImgbbKey = localStorage.getItem('siyam_imgbb_key') || IMGBB_FALLBACK_API_KEY;
+
+      // Category selections state trackers
+      let currentGalleryFilter = 'All';
+
+      // Live state placeholder images setup
+      // We list gorgeous high-definition programmer and anime scenic pictures to avoid empty feeds
+      const DEFAULT_PLACEHOLDER_POSTS = [
+        {
+          id: 'placeholder_post_1',
+          content: "Just programmed and published my modern Developer Portfolio featuring real client-side ImgBB cloud uploader and reactive LocalStorage feed stream! The glassmorphism borders and deep gradients are behaving extremely fluidly. Testing out responsive layout transitions for mobile devices in Dhaka! 🚀🎒🇧🇩",
+          imageUrl: "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?auto=format&fit=crop&w=800&q=80",
+          category: "Coding",
+          timestamp: "2 hours ago",
+          likes: 3,
+          loved: true,
+          custom: false
+        },
+        {
+          id: 'placeholder_post_2',
+          content: "Anime suggestion of the week: Sousou no Frieren (Frieren: Beyond Journey's End). The cinematography, narrative pacing, and emotional landscape are breathtaking. Truly a 10/10 masterpiece for anyone who enjoys calm, beautifully written high-fantasy storytelling! What else should Siyam watch next? 🌸🍿🕹️",
+          imageUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=800&q=80",
+          category: "Anime",
+          timestamp: "1 day ago",
+          likes: 12,
+          loved: false,
+          custom: false
+        },
+        {
+          id: 'placeholder_post_3',
+          content: "Spotted this lovely view near central Dhaka yesterday. Listening to lo-fi tunes while sketching out some custom SVG wireframes. There's an unmatched focus vibe when building layouts late at night! 🎧🌨️🇧🇩",
+          imageUrl: "https://images.unsplash.com/photo-1596422846543-75c6fc18a593?auto=format&fit=crop&w=800&q=80",
+          category: "Dhaka",
+          timestamp: "3 days ago",
+          likes: 8,
+          loved: true,
+          custom: false
+        }
+      ];
+
+      // Cache array reference loaded dynamically
+      let customFeedPosts = [];
+      let attachedImageFile = null;
+
+      // GUARANTEED SAFE INITIALIZATION BLOCK
+      document.addEventListener("DOMContentLoaded", () => {
+        try {
+          // Pre-populate input field dynamically with correct key representation
+          const apiInput = document.getElementById('custom-imgbb-key');
+          if (apiInput) {
+            apiInput.value = activeImgbbKey === IMGBB_FALLBACK_API_KEY ? '' : activeImgbbKey;
+            
+            // Re-sync changes dynamically
+            apiInput.addEventListener('input', (e) => {
+              const val = e.target.value.trim();
+              activeImgbbKey = val || IMGBB_FALLBACK_API_KEY;
+              localStorage.setItem('siyam_imgbb_key', activeImgbbKey);
+            });
+          }
+
+          // Register keyboard listener to close modal on Escape
+          window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+              dismissLightbox();
+            }
+          });
+
+          // Fetch stored customized feed from storage
+          const stored = localStorage.getItem('siyam_feed_v1');
+          if (stored) {
+            try {
+              customFeedPosts = JSON.parse(stored);
+            } catch (err) {
+              console.error("Failed to parse existing storage posts", err);
+              customFeedPosts = [];
+            }
+          }
+
+          // Setup drag and drop for publisher
+          setupDragAndDropEvents();
+
+          // Initialize view
+          renderFeedAndGallery();
+
+          // Render icons nicely
+          lucide.createIcons();
+
+        } catch (fatalErr) {
+          console.error("Encountered initialization glitch:", fatalErr);
+        }
+      });
+
+      // DRAG & DROP BINDINGS SAFE FROM NULL EXCEPTION
+      function setupDragAndDropEvents() {
+        const dropZone = document.getElementById('feed-dropzone');
+        const fileInp = document.getElementById('feed-file-selector');
+
+        if (!dropZone || !fileInp) return;
+
+        ['dragenter', 'dragover'].forEach(name => {
+          dropZone.addEventListener(name, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-cyan-400', 'bg-slate-900/60');
+          });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+          dropZone.addEventListener(name, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-cyan-400', 'bg-slate-900/60');
+          });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+          const files = e.dataTransfer.files;
+          if (files && files.length > 0) {
+            handleSelectedFile(files[0]);
+          }
+        });
+
+        fileInp.addEventListener('change', (e) => {
+          const files = e.target.files;
+          if (files && files.length > 0) {
+            handleSelectedFile(files[0]);
+          }
+        });
+      }
+
+      // FILE PREVIEW PROCESSING LOGIC
+      function handleSelectedFile(file) {
+        if (!file) return;
+
+        // Size check: limit 8MB to protect slow uploads
+        if (file.size > 8 * 1024 * 1024) {
+          triggerToast('File Rejected', 'Attached picture exceeds our 8MB buffer limit. Choose a compressed image.', 'error');
+          return;
+        }
+
+        attachedImageFile = file;
+
+        // Populate thumbnail preview details safely
+        const prBox = document.getElementById('publisher-img-preview-box');
+        const prThumb = document.getElementById('publisher-img-thumbnail');
+        const prName = document.getElementById('publisher-img-name');
+
+        if (prBox && prThumb && prName) {
+          prName.textContent = file.name;
+          
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            prThumb.src = e.target.result;
+            prBox.classList.remove('hidden');
+            prBox.classList.add('flex');
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      // REMOVE SELECTED IMAGE FROM THE FORM
+      function cancelAttachedFile() {
+        attachedImageFile = null;
+        const fileSelector = document.getElementById('feed-file-selector');
+        if (fileSelector) {
+          fileSelector.value = '';
+        }
+
+        const prBox = document.getElementById('publisher-img-preview-box');
+        if (prBox) {
+          prBox.classList.remove('flex');
+          prBox.classList.add('hidden');
+        }
+      }
+
+      // PUBLICATION PIPELINE INTEGRATING IMGBB CLOUD RECURSION
+      async function executePublishPost() {
+        const textInp = document.getElementById('post-text-body');
+        if (!textInp) return;
+
+        const bodyString = textInp.value.trim();
+
+        if (!bodyString && !attachedImageFile) {
+          triggerToast('Empty Input', "Please insert some message characters or select a beautiful graphic first!", 'error');
+          return;
+        }
+
+        let uploadedImageUrl = '';
+        
+        // Check if file attachment exists
+        if (attachedImageFile) {
+          const progressCard = document.getElementById('publish-cloud-progress');
+          const progressFill = document.getElementById('publish-progress-fill');
+          const progressText = document.getElementById('publish-percentage');
+
+          if (progressCard) progressCard.classList.remove('hidden');
+          if (progressFill) progressFill.style.width = '20%';
+          if (progressText) progressText.textContent = '20%';
+
+          try {
+            // Build Multipart Form details safely
+            const formObj = new FormData();
+            formObj.append('image', attachedImageFile);
+
+            if (progressFill) progressFill.style.width = '45%';
+            if (progressText) progressText.textContent = '45%';
+
+            // Dispatch Request towards public Imgbb endpoints
+            const targetUrl = `https://api.imgbb.com/1/upload?key=${activeImgbbKey}`;
+            
+            const req = await fetch(targetUrl, {
+              method: 'POST',
+              body: formObj
+            });
+
+            if (progressFill) progressFill.style.width = '85%';
+            if (progressText) progressText.textContent = '85%';
+
+            if (!req.ok) {
+              throw new Error("ImgBB CDN responded with negative server state.");
+            }
+
+            const resData = await req.json();
+            
+            if (resData && resData.data && resData.data.url) {
+              uploadedImageUrl = resData.data.url;
+            } else {
+              throw new Error("Invalid response schema generated by CDN partner.");
+            }
+
+            if (progressFill) progressFill.style.width = '100%';
+            if (progressText) progressText.textContent = '100%';
+
+          } catch (uploadError) {
+            console.error(uploadError);
+            triggerToast('Upload Connection Failed', "Cloud Imgbb rejected payload. Try to double-check key, file size, or connection status.", 'error');
+            
+            if (progressCard) progressCard.classList.add('hidden');
+            return;
+          }
+
+          // Delay slightly to showcase success completion safely
+          await new Promise(r => setTimeout(r, 600));
+          if (progressCard) progressCard.classList.add('hidden');
+        }
+
+        // Post Object parameters formulation (Automatic category matching for filtering purposes)
+        let resolvedCategory = "Coding";
+        const contentLower = bodyString.toLowerCase();
+        if (contentLower.includes('anime') || contentLower.includes('frieren') || contentLower.includes('show')) {
+          resolvedCategory = "Anime";
+        } else if (contentLower.includes('dhaka') || contentLower.includes('bangladesh') || contentLower.includes('rain')) {
+          resolvedCategory = "Dhaka";
+        }
+
+        const newPost = {
+          id: 'post_' + Date.now(),
+          content: bodyString,
+          imageUrl: uploadedImageUrl,
+          category: resolvedCategory,
+          timestamp: 'Just now',
+          likes: 0,
+          loved: false,
+          custom: true
+        };
+
+        // Prepend inside feed array and persist in client local sandbox
+        customFeedPosts.unshift(newPost);
+        localStorage.setItem('siyam_feed_v1', JSON.stringify(customFeedPosts));
+
+        // Reset elements
+        textInp.value = '';
+        cancelAttachedFile();
+
+        // Render fresh stream
+        renderFeedAndGallery();
+
+        // Inform user elegantly
+        triggerToast('Post Synchronized', "Your post has been indexed and published to Siyam's local storage stream successfully!", 'success');
+      }
+
+      // REACTIVE CONVERSATION STREAM GENERATION & PHOTOGALLERY WORKSPACE RENDERER
+      function renderFeedAndGallery() {
+        // Combined feed lists (Placeholders + custom ones)
+        const activeFeedList = [...customFeedPosts, ...DEFAULT_PLACEHOLDER_POSTS];
+        
+        // Sync total counts statistic inside layout panel
+        const totalStat = document.getElementById('stat-posts-count');
+        if (totalStat) {
+          totalStat.textContent = activeFeedList.length;
+        }
+
+        // 1. RENDER FEED STREAM WINDOW SAVELY
+        const feedTarget = document.getElementById('feed-items-container');
+        if (feedTarget) {
+          feedTarget.innerHTML = '';
+
+          activeFeedList.forEach(item => {
+            const hasImageNode = item.imageUrl ? `
+              <div class="mt-4 rounded-xl overflow-hidden border border-white/5 bg-slate-950/40 relative cursor-pointer group" onclick="revealLightbox('${item.imageUrl}', '${item.content.replace(/'/g, "\\'").substring(0, 50)}...')">
+                <img class="w-full max-h-[350px] object-cover group-hover:scale-[1.02] transition duration-300" src="${item.imageUrl}" alt="Siyam feed image" />
+                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span class="bg-slate-900/90 text-[10px] font-mono border border-white/10 px-3 py-1.5 rounded-full flex items-center gap-1.5"><i data-lucide="zoom-in" class="w-3.5 h-3.5"></i> Open in Fullscreen</span>
+                </div>
+              </div>
+            ` : '';
+
+            const isLovedClass = item.loved ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-white hover:bg-white/5';
+            const likeIconFill = item.loved ? 'fill="currentColor"' : '';
+            
+            const markup = `
+              <div class="glass-panel p-5 rounded-2xl border border-white/10 text-left space-y-3 relative">
+                <!-- Header -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-cyan-400 via-indigo-500 to-rose-500 p-[1.5px]">
+                      <div class="w-full h-full rounded-full bg-[#050917] flex items-center justify-center font-display font-bold text-white text-xs">
+                        S
+                      </div>
+                    </div>
+                    <div>
+                      <h4 class="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                        Sahedur Rahman Siyam
+                        <span class="inline-flex w-3.5 h-3.5 items-center justify-center rounded-full bg-cyan-500 text-[#02050E] shrink-0" title="Verified Creator Account">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-2.5 h-2.5"><path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd" /></svg>
+                        </span>
+                      </h4>
+                      <p class="text-[10px] sm:text-xs text-slate-500 font-mono flex items-center gap-1">
+                        <i data-lucide="clock" class="w-3 h-3"></i> ${item.timestamp} &middot; <span class="text-cyan-400">${item.category}</span>
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Trash custom post only -->
+                  ${item.custom ? `
+                    <button onclick="deleteCustomPost('${item.id}')" class="text-slate-500 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-full transition cursor-pointer" title="Delete message line">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  ` : `
+                    <span class="text-[9px] font-mono text-slate-600 uppercase border border-white/5 bg-white/[0.01] px-2 py-0.5 rounded">Story</span>
+                  `}
+                </div>
+
+                <!-- Text Content message -->
+                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed font-light whitespace-pre-wrap select-text">${item.content}</p>
+
+                <!-- Attached Media content -->
+                ${hasImageNode}
+
+                <!-- Action element indicators -->
+                <div class="flex items-center gap-2 pt-3 border-t border-white/5 mt-4 text-xs">
+                  <button onclick="registerPostReaction('${item.id}', 'love')" class="px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${isLovedClass}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" ${likeIconFill} stroke="currentColor" stroke-width="2" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+                    <span>${item.likes}</span>
+                  </button>
+                  
+                  <button onclick="handlePostLinkCopy('${item.imageUrl || '#SiyamFeed'}')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer" title="Copy URL">
+                    <i data-lucide="link" class="w-3.5 h-3.5"></i> Share
+                  </button>
+                </div>
+              </div>
+            `;
+            feedTarget.insertAdjacentHTML('beforeend', markup);
+          });
+        }
+
+        // 2. RENDER PHOTO MEDIA GALLERY
+        const galleryTarget = document.getElementById('media-grid-workspace');
+        const galleryCounter = document.getElementById('gallery-counter');
+        const galleryEmptySpot = document.getElementById('gallery-empty-spot');
+
+        if (galleryTarget) {
+          galleryTarget.innerHTML = '';
+
+          // Filter out images
+          const allImages = activeFeedList.filter(z => !!z.imageUrl);
+          const filteredImages = currentGalleryFilter === 'All' ? allImages : allImages.filter(x => x.category === currentGalleryFilter);
+
+          if (galleryCounter) {
+            galleryCounter.textContent = `${filteredImages.length} reactive pictures loaded dynamically`;
+          }
+
+          if (filteredImages.length === 0) {
+            if (galleryEmptySpot) galleryEmptySpot.classList.remove('hidden');
+          } else {
+            if (galleryEmptySpot) galleryEmptySpot.classList.add('hidden');
+
+            filteredImages.forEach(img => {
+              const markup = `
+                <div class="glass-panel p-2 rounded-2xl border border-white/5 group relative overflow-hidden transition duration-300">
+                  <div class="relative aspect-video sm:aspect-square w-full rounded-xl overflow-hidden bg-slate-950">
+                    <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="${img.imageUrl}" alt="Media archive Siyam" />
+                    <!-- Action indicators -->
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center gap-2">
+                      <button onclick="revealLightbox('${img.imageUrl}', '${img.content.replace(/'/g, "\\'").substring(0, 45)}...')" class="p-2 rounded-full bg-slate-900 border border-white/10 text-cyan-400 hover:scale-110 active:scale-95 transition cursor-pointer" title="View picture details">
+                        <i data-lucide="zoom-in" class="w-4 h-4"></i>
+                      </button>
+                      <button onclick="copyToClipboardTextOnly('${img.imageUrl}')" class="p-2 rounded-full bg-slate-900 border border-white/10 text-slate-300 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer" title="Copy Direct URL">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <!-- Mini caption -->
+                  <div class="p-2 text-left space-y-1">
+                    <p class="text-[10px] font-mono text-cyan-400 uppercase tracking-widest font-semibold">${img.category}</p>
+                    <p class="text-xs text-slate-300 truncate font-light">${img.content || 'Attached graphic'}</p>
+                  </div>
+                </div>
+              `;
+              galleryTarget.insertAdjacentHTML('beforeend', markup);
+            });
+          }
+        }
+
+        // Reconnect vector lucide icons
+        lucide.createIcons();
+      }
+
+      // REGISTER AND REMOVE REACTIONS INSTANTLY TO STORAGE AND DOM
+      function registerPostReaction(postId, type) {
+        // Find custom first
+        let matched = customFeedPosts.find(u => u.id === postId);
+        if (matched) {
+          if (!matched.loved) {
+            matched.likes += 1;
+            matched.loved = true;
+          } else {
+            matched.likes -= 1;
+            matched.loved = false;
+          }
+          localStorage.setItem('siyam_feed_v1', JSON.stringify(customFeedPosts));
+          renderFeedAndGallery();
+          return;
+        }
+
+        // Else toggle placeholder local tracking
+        let phMatched = DEFAULT_PLACEHOLDER_POSTS.find(v => v.id === postId);
+        if (phMatched) {
+          if (!phMatched.loved) {
+            phMatched.likes += 1;
+            phMatched.loved = true;
+          } else {
+            phMatched.likes -= 1;
+            phMatched.loved = false;
+          }
+          renderFeedAndGallery();
+        }
+      }
+
+      // DELETE POSTS CORRESPONDING TO LOCAL RECURSIONS
+      function deleteCustomPost(postId) {
+        if (!confirm("Remove this post permanently from your archive stream?")) return;
+        customFeedPosts = customFeedPosts.filter(i => i.id !== postId);
+        localStorage.setItem('siyam_feed_v1', JSON.stringify(customFeedPosts));
+        renderFeedAndGallery();
+        triggerToast("Post Deleted", "The index record has been expunged successfully.", "success");
+      }
+
+      // GALLERY CATEGORY SELECTOR LOGIC
+      function categoryFilterSwitch(newCategory) {
+        // Toggle old selected border colors
+        const categories = ["All", "Anime", "Coding", "Dhaka"];
+        categories.forEach(cat => {
+          const btn = document.getElementById(`catfilter-${cat}`);
+          if (btn) {
+            btn.className = "px-3.5 py-1.5 text-xs font-mono rounded-lg text-slate-400 hover:text-white transition cursor-pointer";
+          }
+        });
+
+        const activeBtn = document.getElementById(`catfilter-${newCategory}`);
+        if (activeBtn) {
+          activeBtn.className = "px-3.5 py-1.5 text-xs font-mono rounded-lg bg-cyan-600 text-white font-medium transition cursor-pointer";
+        }
+
+        currentGalleryFilter = newCategory;
+        renderFeedAndGallery();
+      }
+
+      // COPIED SHARE SHORTCUT LINK
+      function handlePostLinkCopy(url) {
+        if (url === '#SiyamFeed') {
+          copyToClipboardTextOnly(window.location.href);
+          triggerToast('Link Copied', 'Shared landing link is active within your clipboard!', 'success');
+        } else {
+          copyToClipboardTextOnly(url);
+        }
+      }
+
+      // TOAST NOTIFIER GENERATOR
+      function triggerToast(title, body, styleClass = 'success') {
+        const wrapper = document.getElementById('toast-wrapper');
+        if (!wrapper) return;
+
+        const dynamicId = 'toast_' + Date.now();
+        let borderAndBg = "border-emerald-500/20 bg-emerald-950/80 text-emerald-100";
+        let iconName = "check";
+
+        if (styleClass === 'error') {
+          borderAndBg = "border-rose-500/20 bg-rose-950/80 text-rose-100";
+          iconName = "alert-triangle";
+        } else if (styleClass === 'info') {
+          borderAndBg = "border-cyan-500/20 bg-cyan-950/80 text-cyan-100";
+          iconName = "info";
+        }
+
+        const node = `
+          <div id="${dynamicId}" class="glass-panel flex items-start gap-3 p-4 rounded-xl border ${borderAndBg} shadow-xl transform translate-y-3 opacity-0 transition-all duration-300">
+            <div class="mt-0.5"><i data-lucide="${iconName}" class="w-4.5 h-4.5"></i></div>
+            <div class="flex-1 space-y-0.5 text-left">
+              <p class="text-xs font-bold font-display">${title}</p>
+              <p class="text-[10px] sm:text-xs opacity-90 leading-relaxed">${body}</p>
+            </div>
+            <button onclick="document.getElementById('${dynamicId}').remove()" class="text-slate-400 hover:text-white" title="Dismiss">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+
+        wrapper.insertAdjacentHTML('beforeend', node);
+        lucide.createIcons();
+
+        setTimeout(() => {
+          const el = document.getElementById(dynamicId);
+          if (el) el.classList.remove('translate-y-3', 'opacity-0');
+        }, 50);
+
+        setTimeout(() => {
+          const el = document.getElementById(dynamicId);
+          if (el) {
+            el.classList.add('opacity-0', 'translate-y-[-10px]');
+            setTimeout(() => el.remove(), 300);
+          }
+        }, 6000);
+      }
+
+      // LIGHTBOX CONTROLS
+      function revealLightbox(url, caption) {
+        const box = document.getElementById('image-lightbox');
+        const img = document.getElementById('lightbox-full-img');
+        const cap = document.getElementById('lightbox-slug');
+        const clipBtn = document.getElementById('lightbox-clipboard');
+        const extLink = document.getElementById('lightbox-external');
+
+        if (!box || !img || !cap) return;
+
+        img.src = url;
+        cap.textContent = caption || 'Cloud Image Asset';
+        
+        if (extLink) extLink.href = url;
+        if (clipBtn) {
+          clipBtn.onclick = () => copyToClipboardTextOnly(url);
+        }
+
+        box.classList.remove('hidden');
+        box.classList.add('flex');
+      }
+
+      function dismissLightbox() {
+        const box = document.getElementById('image-lightbox');
+        if (box) {
+          box.classList.remove('flex');
+          box.classList.add('hidden');
+        }
+      }
+
+      // COPY HELPER FUNCTION
+      function copyToClipboardTextOnly(txt) {
+        if (!txt || txt === '#') {
+          triggerToast('Invalid Asset', 'No live CDN address attached to this post placeholder!', 'error');
+          return;
+        }
+
+        navigator.clipboard.writeText(txt).then(() => {
+          triggerToast('Copied to Clipboard', 'Direct cloud link is ready to paste!', 'info');
+        }).catch(() => {
+          triggerToast('Failed to copy', 'Manual copying is required.', 'error');
+        });
+      }
+
+      // SIMULATE FORM MESSAGE TRANSMISSION
+      function simulateContactFormTransmission() {
+        const alias = document.getElementById('form-sender-alias');
+        const email = document.getElementById('form-sender-email');
+        const body = document.getElementById('form-mail-message');
+
+        if (!alias || !email || !body) return;
+
+        triggerToast("Message Transmitted", `Thank you ${alias.value}! Your message has been sent to Siyam. Siyam will get back to you!`, "success");
+        
+        alias.value = '';
+        email.value = '';
+        body.value = '';
+      }
+
+      // GLOBAL ACCENT COLOR THEME CONTROLLER
+      function setGlobalAccent(themeName) {
+        const colors = {
+          cyan: {
+            color: '#06b6d4',
+            glow: 'rgba(6, 182, 212, 0.35)',
+            gradient: 'linear-gradient(135deg, #22d3ee, #3b82f6)'
+          },
+          rose: {
+            color: '#f43f5e',
+            glow: 'rgba(244, 63, 94, 0.35)',
+            gradient: 'linear-gradient(135deg, #fb7185, #db2777)'
+          },
+          emerald: {
+            color: '#10b981',
+            glow: 'rgba(16, 185, 129, 0.35)',
+            gradient: 'linear-gradient(135deg, #34d399, #059669)'
+          }
+        };
+
+        const config = colors[themeName];
+        if (!config) return;
+
+        document.documentElement.style.setProperty('--accent-color', config.color);
+        document.documentElement.style.setProperty('--accent-glow', config.glow);
+        document.documentElement.style.setProperty('--accent-gradient', config.gradient);
+
+        // Highlight marker dot
+        ['cyan', 'rose', 'emerald'].forEach(name => {
+          const marker = document.getElementById(`marker-${name}`);
+          if (marker) {
+            marker.classList.remove('scale-100');
+            marker.classList.add('scale-0');
+          }
+        });
+
+        const activeMarker = document.getElementById(`marker-${themeName}`);
+        if (activeMarker) {
+          activeMarker.classList.remove('scale-0');
+          activeMarker.classList.add('scale-100');
+        }
+
+        // Animate dynamic spot light color to represent selected theme
+        const spot = document.getElementById('ambient-color-spot');
+        if (spot) {
+          if (themeName === 'cyan') {
+            spot.className = "fixed top-[30%] left-[30%] w-[45vw] h-[45vw] rounded-full bg-cyan-950/15 blur-[140px] pointer-events-none -z-10";
+          } else if (themeName === 'rose') {
+            spot.className = "fixed top-[30%] left-[30%] w-[45vw] h-[45vw] rounded-full bg-rose-950/15 blur-[140px] pointer-events-none -z-10";
+          } else if (themeName === 'emerald') {
+            spot.className = "fixed top-[30%] left-[30%] w-[45vw] h-[45vw] rounded-full bg-emerald-950/15 blur-[140px] pointer-events-none -z-10";
+          }
+        }
+
+        triggerToast("Theme Switched", `Aesthetic style color changed to Cyber ${themeName.toUpperCase()}`, "info");
+      }
+
+      // RESET FEED BACK TO DEFAULT PLACEHOLDERS
+      function confirmResetFeedStream() {
+        if (!confirm("Are you sure you want to clear your custom uploads and restore the original feed placeholders?")) return;
+        customFeedPosts = [];
+        localStorage.removeItem('siyam_feed_v1');
+        renderFeedAndGallery();
+        triggerToast("Caches purged", "Stream returned to initial preloaded values successfully.", "info");
+      }
+
+      // MOBILE OVERLAY HEADER TOGGLING
+      function toggleMobileHeader() {
+        const menu = document.getElementById('header-mobile-menu');
+        const icon = document.getElementById('header-toggle-icon');
+        if (!menu || !icon) return;
+
+        if (menu.classList.contains('hidden')) {
+          menu.classList.remove('hidden');
+          icon.setAttribute('data-lucide', 'x');
+        } else {
+          menu.classList.add('hidden');
+          icon.setAttribute('data-lucide', 'menu');
+        }
+        lucide.createIcons();
+      }
+
+      // KEY REVEAL PANEL TOGGLER
+      function toggleKeyReveal() {
+        const inp = document.getElementById('custom-imgbb-key');
+        if (!inp) return;
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      }
+    </script>
+  </body>
+</html>

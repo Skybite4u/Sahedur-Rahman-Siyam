@@ -1,0 +1,6 @@
+{
+  "name": "Developer Portfolio",
+  "description": "A developer portfolio featuring a modern glassmorphism design, cloud image uploader, and local storage gallery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
