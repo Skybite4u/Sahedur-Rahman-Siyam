@@ -47,7 +47,7 @@ service cloud.firestore {
         && data.photoURL is string && data.photoURL.size() <= 1000
         && data.role is string && (data.role == 'user' || (data.role == 'admin' && data.email == 'siyamrahman1268@gmail.com'))
         && data.keys().hasAll(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt'])
-        && data.keys().size() == 6;
+        && (data.keys().size() == 6 || (data.keys().size() == 7 && data.keys().hasAll(['bio']) && (data.bio == null || (data.bio is string && data.bio.size() <= 1000))));
     }
 
     function isValidPost(data) {

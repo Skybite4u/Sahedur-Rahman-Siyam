@@ -18,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import FeedPage from './components/FeedPage';
+import AdminConsole from './components/AdminConsole';
 import { 
   User, 
   Rss, 
@@ -38,7 +39,11 @@ import {
   ExternalLink,
   X,
   Sparkles,
-  PhoneCall
+  PhoneCall,
+  Shield,
+  UserCircle,
+  Database,
+  Edit2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -83,9 +88,24 @@ const DEFAULT_GALLERY_ITEMS = [
 ];
 
 export default function App() {
-  const [activePage, setActivePage] = useState<'home' | 'feed' | 'gallery' | 'hobbies'>('home');
+  const [activePage, setActivePage] = useState<'home' | 'feed' | 'gallery' | 'hobbies' | 'admin'>('home');
   const [accent, setAccent] = useState<'cyan' | 'rose' | 'emerald'>('cyan');
   
+  // Custom Sandbox properties so that callers can experience the web app bypassing the "auth/operation-not-allowed" error.
+  const [isSandboxMode, setIsSandboxMode] = useState(() => localStorage.getItem('siyam_sandbox_mode') === 'true');
+  const [sandboxUser, setSandboxUser] = useState<any>(() => {
+    const saved = localStorage.getItem('siyam_sandbox_current_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  // Profile Customizer states
+  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
+  const [profileDisplayName, setProfileDisplayName] = useState('');
+  const [profilePhotoURL, setProfilePhotoURL] = useState('');
+  const [profileBio, setProfileBio] = useState('');
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [userProfileData, setUserProfileData] = useState<any>(null);
+
   // Auth state
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
@@ -118,6 +138,24 @@ export default function App() {
     }, 4000);
   };
 
+  const fetchProfileDetails = async (uid: string) => {
+    try {
+      const docSnap = await getDoc(doc(db, 'users', uid));
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setUserProfileData(data);
+        setProfileDisplayName(data.displayName || '');
+        setProfilePhotoURL(data.photoURL || '');
+        setProfileBio(data.bio || '');
+      } else {
+        // No custom profile file yet
+        setUserProfileData(null);
+      }
+    } catch (err) {
+      console.warn("Could not load user profile details:", err);
+    }
+  };
+
   // Sync Auth State
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -135,14 +173,23 @@ export default function App() {
           const userSnap = await getDoc(userDocRef);
           
           if (!userSnap.exists()) {
-            await setDoc(userDocRef, {
+            const initialProfile = {
               uid: user.uid,
               displayName: user.displayName || 'Anonymous Developer',
               email: user.email || '',
               photoURL: user.photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || 'Siyam'}`,
+              bio: '',
               role: assessedRole,
               createdAt: new Date().toISOString()
-            });
+            };
+            await setDoc(userDocRef, initialProfile);
+            setUserProfileData(initialProfile);
+          } else {
+            const data = userSnap.data();
+            setUserProfileData(data);
+            setProfileDisplayName(data.displayName || '');
+            setProfilePhotoURL(data.photoURL || '');
+            setProfileBio(data.bio || '');
           }
         } catch (err) {
           console.error("User mapping failed:", err);
@@ -150,14 +197,72 @@ export default function App() {
       } else {
         setCurrentUser(null);
         setUserRole('user');
+        setUserProfileData(null);
       }
     });
 
     return () => unsubscribe();
   }, []);
 
+  // Sandbox synchronizer effect
+  useEffect(() => {
+    if (isSandboxMode) {
+      localStorage.setItem('siyam_sandbox_mode', 'true');
+      if (sandboxUser) {
+        localStorage.setItem('siyam_sandbox_current_user', JSON.stringify(sandboxUser));
+        setUserProfileData({
+          uid: sandboxUser.uid,
+          displayName: sandboxUser.displayName || 'Demo Developer',
+          photoURL: sandboxUser.photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${sandboxUser.email}`,
+          email: sandboxUser.email || 'developer@gmail.com',
+          bio: sandboxUser.bio || '',
+          role: sandboxUser.email === 'siyamrahman1268@gmail.com' ? 'admin' : 'user',
+          createdAt: sandboxUser.createdAt || new Date().toISOString()
+        });
+        setProfileDisplayName(sandboxUser.displayName || 'Demo Developer');
+        setProfilePhotoURL(sandboxUser.photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${sandboxUser.email}`);
+        setProfileBio(sandboxUser.bio || '');
+      } else {
+        setUserProfileData(null);
+      }
+    } else {
+      localStorage.removeItem('siyam_sandbox_mode');
+    }
+  }, [isSandboxMode, sandboxUser]);
+
   // Fetch count stats and media gallery items dynamically from active DB posts with pictures
   useEffect(() => {
+    if (isSandboxMode) {
+      // Local Sandbox stream
+      const loadLocalPosts = () => {
+        const storedStr = localStorage.getItem('siyam_sandbox_posts');
+        if (storedStr) {
+          const parsed = JSON.parse(storedStr);
+          setStatsPostsCount(parsed.length);
+          const images = parsed
+            .filter((p: any) => p.imageUrl)
+            .map((p: any) => ({
+              id: `db-${p.id}`,
+              title: `Shared by ${p.authorName || 'User'}`,
+              category: p.category || 'Coding',
+              url: p.imageUrl
+            }));
+          setDbImages(images);
+        } else {
+          setStatsPostsCount(2);
+          setDbImages([]);
+        }
+      };
+      loadLocalPosts();
+      // Listen to storage events to keep updated
+      window.addEventListener('storage', loadLocalPosts);
+      const interval = setInterval(loadLocalPosts, 1500); // Polling backup for sandbox instant reactives
+      return () => {
+        window.removeEventListener('storage', loadLocalPosts);
+        clearInterval(interval);
+      };
+    }
+
     const q = query(collection(db, 'posts'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setStatsPostsCount(snapshot.size);
@@ -180,7 +285,7 @@ export default function App() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isSandboxMode]);
 
   // Custom accent themes map config
   const accentStyles = {
@@ -227,6 +332,74 @@ export default function App() {
     setAuthLoading(true);
     setAuthError('');
 
+    // If sandbox mode is explicitly enabled
+    if (isSandboxMode) {
+      try {
+        if (authMode === 'signup') {
+          if (!authName.trim()) {
+            throw new Error('Please input your display name first.');
+          }
+          const mockUid = 'mock-user-' + Math.random().toString(36).substring(2, 9);
+          const mockAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${authEmail.toLowerCase()}`;
+          const newUser = {
+            uid: mockUid,
+            displayName: authName,
+            email: authEmail.toLowerCase(),
+            photoURL: mockAvatar,
+            bio: 'Sandbox Test account',
+            role: authEmail.toLowerCase() === 'siyamrahman1268@gmail.com' ? 'admin' : 'user',
+            createdAt: new Date().toISOString()
+          };
+          
+          // Save to sandbox storage list
+          const savedUsers = localStorage.getItem('siyam_sandbox_users');
+          const usersList = savedUsers ? JSON.parse(savedUsers) : [];
+          usersList.push(newUser);
+          localStorage.setItem('siyam_sandbox_users', JSON.stringify(usersList));
+
+          setSandboxUser(newUser);
+          triggerToast('Sandbox Account Created', `Success! Logged in as mock ${authName}.`, 'success');
+        } else {
+          // Sign in search
+          const savedUsers = localStorage.getItem('siyam_sandbox_users');
+          const usersList = savedUsers ? JSON.parse(savedUsers) : [];
+          const matched = usersList.find((u: any) => u.email === authEmail.toLowerCase());
+          
+          if (matched) {
+            setSandboxUser(matched);
+            triggerToast('Welcome Back (Sandbox)', `Authenticated as sandbox ${matched.displayName}!`, 'success');
+          } else {
+            // Auto create mock if not found to prevent lock out
+            const mockUid = 'mock-user-' + Math.random().toString(36).substring(2, 9);
+            const mockAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${authEmail.toLowerCase()}`;
+            const autoUser = {
+              uid: mockUid,
+              displayName: authEmail.split('@')[0] || 'Demo Guest',
+              email: authEmail.toLowerCase(),
+              photoURL: mockAvatar,
+              bio: 'Auto-created Test account',
+              role: authEmail.toLowerCase() === 'siyamrahman1268@gmail.com' ? 'admin' : 'user',
+              createdAt: new Date().toISOString()
+            };
+            usersList.push(autoUser);
+            localStorage.setItem('siyam_sandbox_users', JSON.stringify(usersList));
+            setSandboxUser(autoUser);
+            triggerToast('Welcome Back (Sandbox)', `Account auto-setup! Logged in as ${autoUser.displayName}`, 'success');
+          }
+        }
+        setIsAuthModalOpen(false);
+        setAuthEmail('');
+        setAuthPassword('');
+        setAuthName('');
+      } catch (err: any) {
+        setAuthError(err?.message || 'Sandbox error.');
+      } finally {
+        setAuthLoading(false);
+      }
+      return;
+    }
+
+    // Normal Live Firebase Routing
     try {
       if (authMode === 'signup') {
         if (!authName.trim()) {
@@ -246,6 +419,7 @@ export default function App() {
           displayName: authName,
           email: authEmail.toLowerCase(),
           photoURL: avatarUrl,
+          bio: '',
           role: authEmail.toLowerCase() === 'siyamrahman1268@gmail.com' ? 'admin' : 'user',
           createdAt: new Date().toISOString()
         });
@@ -262,7 +436,11 @@ export default function App() {
       setAuthPassword('');
       setAuthName('');
     } catch (err: any) {
-      setAuthError(err?.message || 'Transaction aborted.');
+      let friendlyMessage = err?.message || 'Transaction aborted.';
+      if (friendlyMessage.includes('auth/operation-not-allowed') || friendlyMessage.includes('operation-not-allowed')) {
+        friendlyMessage = 'The Firebase project "Email/Password" registration provider is not enabled. Please toggle "Developer Sandbox Mode" below to login instantly as tests, or use the Firebase Console to enable standard auth.';
+      }
+      setAuthError(friendlyMessage);
     } finally {
       setAuthLoading(false);
     }
@@ -285,8 +463,15 @@ export default function App() {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
-      triggerToast('Logged Out', 'Your session was cleared. Secure offline status.', 'info');
+      if (isSandboxMode) {
+        setSandboxUser(null);
+        localStorage.removeItem('siyam_sandbox_current_user');
+        triggerToast('Sandbox Session Erased', 'Cleaned sandbox mock testing state cache.', 'info');
+      } else {
+        await signOut(auth);
+        triggerToast('Logged Out', 'Your session was cleared. Secure offline status.', 'info');
+      }
+      setActivePage('home');
     } catch (err) {
       triggerToast('Signout error', 'Failed to release sessions.', 'error');
     }
@@ -385,13 +570,25 @@ export default function App() {
             >
               My Hobbies
             </button>
+            {activePage === 'admin' || (userProfileData?.role === 'admin' || (isSandboxMode && sandboxUser?.email === 'siyamrahman1268@gmail.com')) ? (
+              <button 
+                onClick={() => setActivePage('admin')} 
+                className={`px-4 py-1.5 text-xs transition rounded-full font-bold cursor-pointer flex items-center gap-1 ${
+                  activePage === 'admin' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 shadow-sm' : 'text-yellow-400/90 hover:text-yellow-400 hover:bg-yellow-500/5'
+                }`}
+                title="Supreme Database Console"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Admin DB</span>
+              </button>
+            ) : null}
           </nav>
 
           {/* User Signin details or launcher */}
           <div className="flex items-center gap-3">
             
             {/* Palette selection selectors */}
-            <div className="flex items-center gap-1.5 bg-slate-950/60 border border-white/5 px-2 py-1.5 rounded-full shadow-inner">
+            <div className="flex items-center gap-1.5 bg-slate-950/60 border border-white/5 px-2 py-1.5 rounded-full shadow-inner animate-pulse">
               <button 
                 onClick={() => setAccent('cyan')} 
                 className={`w-3 h-3 rounded-full bg-cyan-500 transition scale-90 hover:scale-110 cursor-pointer ${accent === 'cyan' && 'scale-125 ring-2 ring-white/50'}`}
@@ -409,47 +606,77 @@ export default function App() {
               />
             </div>
 
-            {currentUser ? (
-              <div className="flex items-center gap-2">
-                <div className="hidden sm:flex flex-col text-right">
-                  <span className="text-xs font-bold text-slate-200">{currentUser.displayName || 'Developer'}</span>
-                  <span className="text-[9px] font-mono text-cyan-400 truncate max-w-[120px]">{currentUser.email}</span>
+            {/* Determine derived session values */}
+            {(() => {
+              const activeUser = isSandboxMode ? sandboxUser : currentUser;
+              return activeUser ? (
+                <div className="flex items-center gap-2.5">
+                  <div className="hidden sm:flex flex-col text-right">
+                    <span className="text-xs font-bold text-slate-200">{activeUser.displayName || 'Developer'}</span>
+                    <span className="text-[9px] font-mono text-cyan-400 truncate max-w-[120px]">{activeUser.email}</span>
+                  </div>
+                  <div className="relative group shrink-0">
+                    <img 
+                      src={activeUser.photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${activeUser.email}`}
+                      className="w-8.5 h-8.5 rounded-full border border-white/10 hover:border-cyan-400 transition-all duration-300 object-cover cursor-pointer"
+                      alt="Profile"
+                      title="Edit displays bio & statuses"
+                      onClick={() => {
+                        setProfileDisplayName(activeUser.displayName || '');
+                        setProfilePhotoURL(activeUser.photoURL || '');
+                        setProfileBio(userProfileData?.bio || '');
+                        setIsProfileEditOpen(true);
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        setProfileDisplayName(activeUser.displayName || '');
+                        setProfilePhotoURL(activeUser.photoURL || '');
+                        setProfileBio(userProfileData?.bio || '');
+                        setIsProfileEditOpen(true);
+                      }}
+                      className="absolute -bottom-1 -right-1 p-0.5 bg-[#050917] hover:bg-cyan-950 text-cyan-400 hover:text-white border border-white/10 rounded-full cursor-pointer transition duration-150 shadow"
+                    >
+                      <Edit2 className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    className="p-1.5 bg-[#050917] hover:bg-rose-950/20 text-slate-400 hover:text-rose-455 text-xs border border-white/5 hover:border-red-900/30 rounded-full transition cursor-pointer"
+                    title="Logout Session"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <img 
-                  src={currentUser.photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUser.email}`}
-                  className="w-8 h-8 rounded-full border border-white/10"
-                  alt="Profile"
-                  title={currentUser.email}
-                />
+              ) : (
                 <button
-                  onClick={handleSignOut}
-                  className="p-1 px-2.5 bg-slate-900 hover:bg-red-950/30 text-rose-400 text-xs font-medium border border-white/5 hover:border-red-900/30 rounded-full transition cursor-pointer"
-                  title="Logout Session"
+                  onClick={() => {
+                    setAuthMode('signin');
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 px-4 py-2 rounded-full text-xs font-bold hover:opacity-90 active:scale-95 transition cursor-pointer"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogIn className="w-3.5 h-3.5" /> Sign In / Sign Up
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  setAuthMode('signin');
-                  setIsAuthModalOpen(true);
-                }}
-                className="inline-flex items-center gap-1 bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 px-4 py-2 rounded-full text-xs font-bold hover:opacity-90 active:scale-95 transition cursor-pointer"
-              >
-                <LogIn className="w-3.5 h-3.5" /> Sign In / Sign Up
-              </button>
-            )}
+              );
+            })()}
 
           </div>
         </div>
 
         {/* Mobile quick header menu bar */}
-        <div className="md:hidden flex items-center justify-around h-11 bg-slate-950/40 border-t border-b border-white/5 text-[10px] font-mono font-medium">
+        <div className="md:hidden flex items-center justify-around h-11 bg-slate-950/40 border-t border-b border-white/5 text-[10px] font-mono font-medium flex-wrap gap-1 p-1">
           <button onClick={() => setActivePage('home')} className={`flex items-center gap-1 ${activePage === 'home' ? 'text-cyan-400' : 'text-slate-400'}`}><User className="w-3.5 h-3.5" /> Home</button>
           <button onClick={() => setActivePage('feed')} className={`flex items-center gap-1 ${activePage === 'feed' ? 'text-cyan-400' : 'text-slate-400'}`}><Rss className="w-3.5 h-3.5" /> Feed</button>
           <button onClick={() => setActivePage('gallery')} className={`flex items-center gap-1 ${activePage === 'gallery' ? 'text-cyan-400' : 'text-slate-400'}`}><ImageIcon className="w-3.5 h-3.5" /> Gallery</button>
           <button onClick={() => setActivePage('hobbies')} className={`flex items-center gap-1 ${activePage === 'hobbies' ? 'text-cyan-400' : 'text-slate-400'}`}><Compass className="w-3.5 h-3.5" /> Hobbies</button>
+          {(() => {
+            const activeUser = isSandboxMode ? sandboxUser : currentUser;
+            const isMobAdmin = activeUser?.email === 'siyamrahman1268@gmail.com' || userProfileData?.role === 'admin';
+            return isMobAdmin ? (
+              <button onClick={() => setActivePage('admin')} className={`flex items-center gap-1 ${activePage === 'admin' ? 'text-yellow-400 font-bold' : 'text-slate-400'}`}><Shield className="w-3.5 h-3.5" /> Admin</button>
+            ) : null;
+          })()}
         </div>
       </header>
 
@@ -616,13 +843,14 @@ export default function App() {
             {/* DEDICATED FEED PAGE */}
             {activePage === 'feed' && (
               <FeedPage 
-                isAdmin={userRole === 'admin'}
-                currentUser={currentUser}
+                isAdmin={userProfileData?.role === 'admin' || (isSandboxMode && sandboxUser?.email === 'siyamrahman1268@gmail.com')}
+                currentUser={isSandboxMode ? sandboxUser : currentUser}
                 onViewImage={(url, title) => {
                   setLightboxUrl(url);
                   setLightboxTitle(title);
                 }}
                 triggerToast={triggerToast}
+                isSandboxMode={isSandboxMode}
               />
             )}
 
@@ -762,6 +990,16 @@ export default function App() {
               </div>
             )}
 
+            {/* INTEGRATED SECURE ADMIN CONSOLE PAGE */}
+            {activePage === 'admin' && (
+              <AdminConsole 
+                currentUser={isSandboxMode ? sandboxUser : currentUser}
+                isAdmin={userProfileData?.role === 'admin' || (isSandboxMode && sandboxUser?.email === 'siyamrahman1268@gmail.com')}
+                triggerToast={triggerToast}
+                isSandboxMode={isSandboxMode}
+              />
+            )}
+
           </motion.div>
         </AnimatePresence>
       </main>
@@ -832,7 +1070,7 @@ export default function App() {
               initial={{ scale: 0.95, y: 15 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 15 }}
-              className="glass-panel p-6 sm:p-8 rounded-2xl w-full max-w-md border border-white/15 shadow-22xl relative text-left"
+              className={`glass-panel p-6 sm:p-8 rounded-2xl w-full max-w-md border shadow-22xl relative text-left transition-all duration-300 ${isSandboxMode ? 'border-amber-400/50 shadow-amber-500/5' : 'border-white/15'}`}
             >
               <button 
                 onClick={() => setIsAuthModalOpen(false)}
@@ -844,12 +1082,14 @@ export default function App() {
 
               <div className="text-center space-y-1 mb-6">
                 <h3 className="text-xl font-display font-extrabold text-white">
-                  {authMode === 'signin' ? 'Siyam Social Login' : 'Register Custom Account'}
+                  {isSandboxMode ? 'Siyam Sandbox Testing' : (authMode === 'signin' ? 'Siyam Social Login' : 'Register Custom Account')}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {authMode === 'signin' 
-                    ? 'Authenticate yourself to React, edit and write feed entries.' 
-                    : 'Create your sandbox identity in Siyam\'s live Cloud Database.'}
+                  {isSandboxMode 
+                    ? 'Offline sandbox simulator bypass is ENABLED.' 
+                    : (authMode === 'signin' 
+                      ? 'Authenticate yourself to React, edit and write feed entries.' 
+                      : 'Create your sandbox identity in Siyam\'s live Cloud Database.')}
                 </p>
               </div>
 
@@ -860,9 +1100,11 @@ export default function App() {
               )}
 
               {/* Dev notice explaining how to configure console auth details */}
-              <div className="p-2.5 bg-cyan-950/40 border border-cyan-900/40 text-[10px] text-cyan-400 rounded-lg mb-4 leading-tight">
-                <strong>Console Setup Notice:</strong> If email auth actions fail, make sure <strong>Email/Password</strong> or <strong>Google Sign-In</strong> is toggled to ENABLE in Firebase Auth under Project ID: <code>nice-interface-wmvz5</code>.
-              </div>
+              {!isSandboxMode && (
+                <div className="p-2.5 bg-cyan-950/40 border border-cyan-900/40 text-[10px] text-cyan-400 rounded-lg mb-4 leading-tight">
+                  <strong>Console Setup Notice:</strong> If email auth actions fail, make sure <strong>Email/Password</strong> or <strong>Google Sign-In</strong> is toggled to ENABLE in Firebase Auth under Project ID: <code>nice-interface-wmvz5</code>.
+                </div>
+              )}
 
               <form onSubmit={handleAuthSubmit} className="space-y-4">
                 
@@ -914,12 +1156,48 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Sandbox Demo mode bypass switch */}
+                <div className="p-3 bg-amber-550/10 border border-amber-500/20 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-mono font-bold text-amber-400 block flex items-center gap-1 leading-none">
+                        <Database className="w-3.5 h-3.5" /> Sandbox Bypass Mode
+                      </span>
+                      <span className="text-[9px] text-slate-400 block leading-tight">
+                        Bypass registration operation errors instantly!
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={isSandboxMode}
+                        onChange={(e) => {
+                          const val = e.target.checked;
+                          setIsSandboxMode(val);
+                          triggerToast(
+                            val ? "Sandbox Mode ENABLED" : "Standard Firebase Enabled",
+                            val ? "Operating in local test simulator mode. Authentication operation failures bypassed!" : "Using live Cloud Firestore servers.",
+                            val ? "info" : "success"
+                          );
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4.5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                  </div>
+                  {isSandboxMode && authEmail.toLowerCase() === 'siyamrahman1268@gmail.com' && (
+                    <p className="text-[9px] text-yellow-400 font-mono leading-tight bg-yellow-950/40 p-1.5 rounded border border-yellow-800/40">
+                      <strong>Admin Trigger detected:</strong> authenticating as siyamrahman1268@gmail.com. This Sandbox testing session will gain full administrative role over columns, feed, and post comments!
+                    </p>
+                  )}
+                </div>
+
                 <button
                   type="submit"
                   disabled={authLoading}
                   className="w-full py-2.5 bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 font-bold rounded-lg text-xs sm:text-sm hover:brightness-110 active:scale-[0.98] transition cursor-pointer"
                 >
-                  {authLoading ? 'Verifying...' : authMode === 'signin' ? 'Login' : 'Signup'}
+                  {authLoading ? 'Verifying...' : (isSandboxMode ? 'Sandbox Login' : (authMode === 'signin' ? 'Login' : 'Signup'))}
                 </button>
 
                 <div className="relative flex py-2 items-center">
@@ -964,6 +1242,245 @@ export default function App() {
                     </button>
                   </span>
                 )}
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* PROFILE SECTIONS CUSTOMIZER SLIDE-IN DIALOG */}
+      <AnimatePresence>
+        {isProfileEditOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/85 backdrop-blur-md z-[110] flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 30 }}
+              className="glass-panel p-6 sm:p-8 rounded-3xl w-full max-w-lg border border-white/20 shadow-2xl relative text-left my-8 space-y-6"
+            >
+              <button 
+                onClick={() => setIsProfileEditOpen(false)}
+                className="absolute top-5 right-5 text-slate-400 hover:text-white transition p-1 cursor-pointer"
+                title="Discard edit alterations"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-400 font-mono">
+                  <Sparkles className="w-3 h-3 animate-pulse" />
+                  <span>Interactive Profile Editor</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-display font-extrabold text-white">Customize Developer Profile</h3>
+                <p className="text-xs text-slate-400">
+                  Update your display credentials. Changes reflect across all post feed columns instantly.
+                </p>
+              </div>
+
+              {/* PROFILE FORM */}
+              <div className="space-y-4">
+                
+                {/* Display Name */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block font-bold">Public Nickname</label>
+                  <input 
+                    type="text"
+                    value={profileDisplayName}
+                    onChange={(e) => setProfileDisplayName(e.target.value)}
+                    className="w-full glass-input text-xs sm:text-sm px-3.5 py-2.5 rounded-xl text-slate-200"
+                    placeholder="E.g. Sahedur Siyam"
+                  />
+                </div>
+
+                {/* PhotoURL Options */}
+                <div className="space-y-2.5">
+                  <label className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block font-bold">Select or Upload Avatar</label>
+                  
+                  {/* Avatar Previews Row */}
+                  <div className="grid grid-cols-6 gap-2 bg-slate-950/40 p-2.5 rounded-xl border border-white/5">
+                    {["Siyam", "Anime", "Coder", "Gamer", "Dhaka", "Special"].map((seed) => {
+                      const avatarUrl = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${seed}`;
+                      const isSelected = profilePhotoURL === avatarUrl;
+                      return (
+                        <button
+                          key={seed}
+                          type="button"
+                          onClick={() => setProfilePhotoURL(avatarUrl)}
+                          className={`relative rounded-lg p-1 aspect-square border overflow-hidden hover:scale-105 transition cursor-pointer flex items-center justify-center bg-[#050917] ${isSelected ? 'border-cyan-400 bg-cyan-950/20 shadow' : 'border-white/5 hover:border-white/20'}`}
+                          title={`Pick avatar seed: ${seed}`}
+                        >
+                          <img src={avatarUrl} className="w-full h-full object-cover" alt={seed} />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Manual Input or upload file option */}
+                  <div className="space-y-2">
+                    <input 
+                      type="text"
+                      value={profilePhotoURL}
+                      onChange={(e) => setProfilePhotoURL(e.target.value)}
+                      className="w-full glass-input text-[11px] font-mono px-3 py-2 rounded-lg text-slate-350"
+                      placeholder="Or specify custom Image URL Address..."
+                    />
+
+                    {/* Files Input for direct upload */}
+                    <div className="flex items-center gap-3 bg-white/[0.01] border border-white/5 p-2 rounded-xl text-xs">
+                      <span className="text-slate-500 font-mono text-[10px] shrink-0">Upload local files:</span>
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          setProfileLoading(true);
+                          triggerToast("Uploading Avatar", "Storing portrait to ImgBB secure clusters...", "info");
+                          
+                          try {
+                            const formData = new FormData();
+                            formData.append('image', file);
+                            
+                            const response = await fetch('https://api.imgbb.com/1/upload?key=0ca5cb8d23fec9512d7c4883907e86cf', {
+                              method: 'POST',
+                              body: formData
+                            });
+                            
+                            const result = await response.json();
+                            if (result.success && result.data?.url) {
+                              setProfilePhotoURL(result.data.url);
+                              triggerToast("Avatar Uploaded", "Direct storage completed! Remember to save changes.", "success");
+                            } else {
+                              throw new Error(result.error?.message || "Upload failed");
+                            }
+                          } catch (err: any) {
+                            triggerToast("Network Fail", err?.message || "CDN failed", "error");
+                          } finally {
+                            setProfileLoading(false);
+                          }
+                        }}
+                        disabled={profileLoading}
+                        className="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-full file:border-0 file:text-[10px] file:font-mono file:bg-cyan-950 file:text-cyan-400 hover:file:bg-cyan-900 file:cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custom Status Bio */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 font-bold uppercase tracking-widest">
+                    <span>Profile Status / Bio Message</span>
+                    <span className={profileBio.length > 280 ? "text-rose-400" : "text-slate-500"}>
+                      {profileBio.length}/300
+                    </span>
+                  </div>
+                  <textarea 
+                    value={profileBio}
+                    onChange={(e) => setProfileBio(e.target.value.slice(0, 300))}
+                    className="w-full glass-input text-xs sm:text-sm px-3.5 py-2.5 rounded-xl text-slate-200 font-sans"
+                    placeholder="Describe yourself, hobbies, favorites, etc."
+                    rows={3}
+                  />
+                </div>
+
+              </div>
+
+              {/* SAVE / DISCARD COMMAND PANEL */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+                <button
+                  onClick={() => setIsProfileEditOpen(false)}
+                  className="px-4 py-2 text-xs text-slate-400 border border-white/10 rounded-xl hover:bg-white/5 hover:text-white transition font-medium cursor-pointer"
+                >
+                  Close & Discard
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!profileDisplayName.trim()) {
+                      triggerToast("Name required", "Please enter a display name for profile sync", "error");
+                      return;
+                    }
+                    
+                    setProfileLoading(true);
+                    const activeUser = isSandboxMode ? sandboxUser : currentUser;
+                    
+                    if (isSandboxMode) {
+                      // Sandbox Save Profile
+                      if (!activeUser) {
+                        triggerToast("Sandbox Error", "No active guest session found to alter.", "error");
+                        setProfileLoading(false);
+                        return;
+                      }
+                      
+                      const nextUser = {
+                        ...activeUser,
+                        displayName: profileDisplayName,
+                        photoURL: profilePhotoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${activeUser.email}`,
+                        bio: profileBio
+                      };
+                      setSandboxUser(nextUser);
+                      localStorage.setItem('siyam_sandbox_current_user', JSON.stringify(nextUser));
+                      
+                      // Also update list table in localStorage
+                      const storedLStr = localStorage.getItem('siyam_sandbox_users');
+                      const uList = storedLStr ? JSON.parse(storedLStr) : [];
+                      const updatedList = uList.find((u: any) => u.uid === activeUser.uid)
+                        ? uList.map((u: any) => u.uid === activeUser.uid ? { ...u, displayName: profileDisplayName, photoURL: profilePhotoURL, bio: profileBio } : u)
+                        : [...uList, { ...nextUser, role: 'user' }];
+                      localStorage.setItem('siyam_sandbox_users', JSON.stringify(updatedList));
+                      
+                      // Sync userProfileData
+                      setUserProfileData(nextUser);
+                      
+                      triggerToast("Sandbox Preserved", "Your mock tester credentials were saved in the active viewport!", "success");
+                      setIsProfileEditOpen(false);
+                      setProfileLoading(false);
+                    } else {
+                      // Real Firebase Save Profile
+                      if (!currentUser) return;
+                      try {
+                        await updateProfile(auth.currentUser!, {
+                          displayName: profileDisplayName,
+                          photoURL: profilePhotoURL
+                        });
+                        
+                        await setDoc(doc(db, 'users', currentUser.uid), {
+                          uid: currentUser.uid,
+                          displayName: profileDisplayName,
+                          email: currentUser.email!,
+                          photoURL: profilePhotoURL,
+                          bio: profileBio,
+                          role: userRole,
+                          createdAt: userProfileData?.createdAt || new Date().toISOString()
+                        });
+                        
+                        setUserProfileData({
+                          ...userProfileData,
+                          displayName: profileDisplayName,
+                          photoURL: profilePhotoURL,
+                          bio: profileBio
+                        });
+                        
+                        triggerToast("Profile Published", "Your modifications were permanently recorded in Firestore!", "success");
+                        setIsProfileEditOpen(false);
+                      } catch (e: any) {
+                        triggerToast("Database Lock Error", e?.message || "Firestore insertion failure", "error");
+                      } finally {
+                        setProfileLoading(false);
+                      }
+                    }
+                  }}
+                  disabled={profileLoading}
+                  className="px-5 py-2.5 bg-cyan-400 hover:brightness-110 font-bold text-slate-950 text-xs sm:text-sm rounded-xl transition cursor-pointer disabled:opacity-40"
+                >
+                  {profileLoading ? 'Streaming updates...' : 'Save Profile Changes'}
+                </button>
               </div>
 
             </motion.div>

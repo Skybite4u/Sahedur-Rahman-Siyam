@@ -35,9 +35,51 @@ interface FeedPageProps {
   currentUser: any;
   onViewImage: (url: string, title: string) => void;
   triggerToast: (title: string, msg: string, type: 'success' | 'error' | 'info') => void;
+  isSandboxMode?: boolean;
 }
 
-export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToast }: FeedPageProps) {
+const MOCK_SANDBOX_POSTS: Post[] = [
+  {
+    id: 'mock_post_1',
+    content: "Just finished watching a gorgeous anime movie by Makoto Shinkai! The lighting, cloud rendering, and musical tracks are absolutely spectacular. Highly recommend binge-watching this on a cozy night in Dhaka. 🌸✨",
+    category: 'Anime',
+    imageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=700&q=80',
+    authorId: 'admin_uid',
+    authorName: 'Sahedur Rahman Siyam',
+    authorEmail: 'siyamrahman1268@gmail.com',
+    authorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=Siyam',
+    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(), 
+    lovesCount: 12,
+    lovedBy: ['mock_user_2']
+  },
+  {
+    id: 'mock_post_2',
+    content: "Fascinating work setting up an offline mock testing Sandbox Engine to bypass Firebase Authentication Error (auth/operation-not-allowed)! When you toggle Sandbox Mode on, all database operations utilize custom local state trees and secure localStorage vectors perfectly. Modern full-stack architecture is amazing! ⚙️💻",
+    category: 'Coding',
+    authorId: 'admin_uid',
+    authorName: 'Sahedur Rahman Siyam',
+    authorEmail: 'siyamrahman1268@gmail.com',
+    authorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=Siyam',
+    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(), 
+    lovesCount: 24,
+    lovedBy: ['mock_user_1']
+  },
+  {
+    id: 'mock_post_3',
+    content: "Exploring some beautiful quiet streets around Dhaka while listening to high-fidelity lo-fi loops. Class 12 exams are approaching soon, but taking a coding break under the glowing streetlamps is peaceful. 🌙🌃",
+    category: 'Dhaka',
+    imageUrl: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=700&q=80',
+    authorId: 'admin_uid',
+    authorName: 'Sahedur Rahman Siyam',
+    authorEmail: 'siyamrahman1268@gmail.com',
+    authorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=Siyam',
+    createdAt: new Date(Date.now() - 1800000).toISOString(), 
+    lovesCount: 8,
+    lovedBy: []
+  }
+];
+
+export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToast, isSandboxMode }: FeedPageProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [postContent, setPostContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Anime' | 'Coding' | 'Dhaka'>('Coding');
@@ -59,32 +101,58 @@ export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToa
 
   // Retrieve posts in real-time
   useEffect(() => {
-    const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const postsData: Post[] = [];
-      snapshot.forEach((doc) => {
-        const d = doc.data();
-        postsData.push({
-          id: doc.id,
-          content: d.content || '',
-          imageUrl: d.imageUrl,
-          category: d.category || 'All',
-          authorId: d.authorId || '',
-          authorName: d.authorName || '',
-          authorEmail: d.authorEmail || '',
-          authorAvatar: d.authorAvatar || '',
-          createdAt: d.createdAt,
-          lovesCount: d.lovesCount || 0,
-          lovedBy: d.lovedBy || []
+    if (isSandboxMode) {
+      const initSandboxPosts = () => {
+        const stored = localStorage.getItem('siyam_sandbox_posts');
+        if (stored) {
+          setPosts(JSON.parse(stored));
+        } else {
+          localStorage.setItem('siyam_sandbox_posts', JSON.stringify(MOCK_SANDBOX_POSTS));
+          setPosts(MOCK_SANDBOX_POSTS);
+        }
+      };
+      
+      initSandboxPosts();
+      
+      const handleStorageChange = () => {
+        const stored = localStorage.getItem('siyam_sandbox_posts');
+        if (stored) setPosts(JSON.parse(stored));
+      };
+      window.addEventListener('storage', handleStorageChange);
+      window.addEventListener('siyam_sandbox_posts_update', handleStorageChange);
+      
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('siyam_sandbox_posts_update', handleStorageChange);
+      };
+    } else {
+      const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const postsData: Post[] = [];
+        snapshot.forEach((doc) => {
+          const d = doc.data();
+          postsData.push({
+            id: doc.id,
+            content: d.content || '',
+            imageUrl: d.imageUrl,
+            category: d.category || 'All',
+            authorId: d.authorId || '',
+            authorName: d.authorName || '',
+            authorEmail: d.authorEmail || '',
+            authorAvatar: d.authorAvatar || '',
+            createdAt: d.createdAt,
+            lovesCount: d.lovesCount || 0,
+            lovedBy: d.lovedBy || []
+          });
         });
+        setPosts(postsData);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'posts');
       });
-      setPosts(postsData);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'posts');
-    });
 
-    return () => unsubscribe();
-  }, [currentUser]);
+      return () => unsubscribe();
+    }
+  }, [currentUser, isSandboxMode]);
 
   // Handle selected image file
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -153,6 +221,38 @@ export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToa
         uploadedUrl = await uploadImgbb(attachedFile);
       }
 
+      if (isSandboxMode) {
+        const newPost: Post = {
+          id: `sandbox_${Date.now()}`,
+          content: postContent,
+          category: selectedCategory,
+          authorId: currentUser.uid,
+          authorName: currentUser.displayName || 'Anonymous Developer',
+          authorEmail: currentUser.email || '',
+          authorAvatar: currentUser.photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUser.email || 'Siyam'}`,
+          createdAt: new Date().toISOString(),
+          lovesCount: 0,
+          lovedBy: []
+        };
+        
+        if (uploadedUrl) {
+          newPost.imageUrl = uploadedUrl;
+        }
+        
+        const stored = localStorage.getItem('siyam_sandbox_posts');
+        const list = stored ? JSON.parse(stored) : [];
+        const nextList = [newPost, ...list];
+        localStorage.setItem('siyam_sandbox_posts', JSON.stringify(nextList));
+        window.dispatchEvent(new Event('siyam_sandbox_posts_update'));
+        
+        setPostContent('');
+        cancelAttachment();
+        setUploadPercent(null);
+        triggerToast('Post Shared (Sandbox)', 'Your mock update was instantly stored in the local sandbox database!', 'success');
+        setIsSubmitting(false);
+        return;
+      }
+
       const postRef = doc(collection(db, 'posts'));
       const newPostData = {
         id: postRef.id,
@@ -188,6 +288,19 @@ export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToa
 
   // Delete post
   const handleDeletePost = async (postId: string) => {
+    if (isSandboxMode) {
+      if (!window.confirm('Are you sure you want to delete this mock post from the Sandbox database?')) return;
+      const stored = localStorage.getItem('siyam_sandbox_posts');
+      if (stored) {
+        const list = JSON.parse(stored);
+        const nextList = list.filter((p: Post) => p.id !== postId);
+        localStorage.setItem('siyam_sandbox_posts', JSON.stringify(nextList));
+        window.dispatchEvent(new Event('siyam_sandbox_posts_update'));
+        triggerToast('Post Deleted (Sandbox)', 'Target mock data and local comments references deleted.', 'success');
+      }
+      return;
+    }
+
     if (!window.confirm('Are you sure you want to delete this post permanentally from Siyam\'s Feed?')) return;
     try {
       await deleteDoc(doc(db, 'posts', postId));
@@ -208,6 +321,20 @@ export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToa
       triggerToast('Blank Content', 'Cannot update post with blank text.', 'error');
       return;
     }
+
+    if (isSandboxMode) {
+      const stored = localStorage.getItem('siyam_sandbox_posts');
+      if (stored) {
+        const list = JSON.parse(stored);
+        const nextList = list.map((p: Post) => p.id === postId ? { ...p, content: editingContent } : p);
+        localStorage.setItem('siyam_sandbox_posts', JSON.stringify(nextList));
+        window.dispatchEvent(new Event('siyam_sandbox_posts_update'));
+        setEditingPostId(null);
+        triggerToast('Post Updated (Sandbox)', 'Inline status description updated inside local state store.', 'success');
+      }
+      return;
+    }
+
     try {
       await updateDoc(doc(db, 'posts', postId), {
         content: editingContent
@@ -227,6 +354,28 @@ export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToa
     }
 
     const { lovedBy, id, lovesCount } = post;
+
+    if (isSandboxMode) {
+      const stored = localStorage.getItem('siyam_sandbox_posts');
+      if (stored) {
+        const list = JSON.parse(stored);
+        const nextList = list.map((p: Post) => {
+          if (p.id === id) {
+            const isLoved = p.lovedBy.includes(currentUser.uid);
+            return {
+              ...p,
+              lovedBy: isLoved ? p.lovedBy.filter(u => u !== currentUser.uid) : [...p.lovedBy, currentUser.uid],
+              lovesCount: isLoved ? Math.max(0, p.lovesCount - 1) : p.lovesCount + 1
+            };
+          }
+          return p;
+        });
+        localStorage.setItem('siyam_sandbox_posts', JSON.stringify(nextList));
+        window.dispatchEvent(new Event('siyam_sandbox_posts_update'));
+      }
+      return;
+    }
+
     const isLoved = lovedBy.includes(currentUser.uid);
     const postDocRef = doc(db, 'posts', id);
 
@@ -502,14 +651,18 @@ export default function FeedPage({ isAdmin, currentUser, onViewImage, triggerToa
                               <span>#{post.category}</span>
                               <span>&middot;</span>
                               <span>
-                                {post.createdAt 
-                                  ? new Date(post.createdAt.seconds * 1000).toLocaleDateString(undefined, {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })
-                                  : 'Syncing...'}
+                                {(() => {
+                                  if (!post.createdAt) return 'Syncing...';
+                                  const date = typeof post.createdAt === 'string'
+                                    ? new Date(post.createdAt)
+                                    : (post.createdAt.seconds ? new Date(post.createdAt.seconds * 1000) : new Date());
+                                  return date.toLocaleDateString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  });
+                                })()}
                               </span>
                             </div>
                           </div>
@@ -636,40 +789,79 @@ interface PostCommentsSectionProps {
   currentUser: any;
   isAdmin: boolean;
   triggerToast: (title: string, msg: string, type: 'success' | 'error' | 'info') => void;
+  isSandboxMode?: boolean;
 }
 
-function PostCommentsSection({ postId, currentUser, isAdmin, triggerToast }: PostCommentsSectionProps) {
+const MOCK_COMMENT_POST_2 = [
+  {
+    id: "mock_c_1",
+    postId: "mock_post_2",
+    content: "Thank god for sandbox bypass! Now I can test full-stack dashboards instantly! 🔥",
+    authorId: "mock_user_1",
+    authorName: "Nafis Anjum",
+    authorEmail: "nafis@gmail.com",
+    authorAvatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Nafis",
+    createdAt: new Date(Date.now() - 3600000).toISOString()
+  }
+];
+
+function PostCommentsSection({ postId, currentUser, isAdmin, triggerToast, isSandboxMode }: PostCommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newCommentText, setNewCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   // Subscribe to post comments
   useEffect(() => {
-    const commentsColRef = collection(db, 'posts', postId, 'comments');
-    const q = query(commentsColRef, orderBy('createdAt', 'asc'));
+    if (isSandboxMode) {
+      const initComments = () => {
+        const stored = localStorage.getItem(`siyam_sandbox_comments_${postId}`);
+        if (stored) {
+          setComments(JSON.parse(stored));
+        } else {
+          const defaults = postId === 'mock_post_2' ? MOCK_COMMENT_POST_2 : [];
+          localStorage.setItem(`siyam_sandbox_comments_${postId}`, JSON.stringify(defaults));
+          setComments(defaults);
+        }
+      };
+      
+      initComments();
+      
+      const handleEvent = () => {
+        const stored = localStorage.getItem(`siyam_sandbox_comments_${postId}`);
+        if (stored) setComments(JSON.parse(stored));
+      };
+      window.addEventListener(`siyam_sandbox_comments_update_${postId}`, handleEvent);
+      
+      return () => {
+        window.removeEventListener(`siyam_sandbox_comments_update_${postId}`, handleEvent);
+      };
+    } else {
+      const commentsColRef = collection(db, 'posts', postId, 'comments');
+      const q = query(commentsColRef, orderBy('createdAt', 'asc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const commentsData: Comment[] = [];
-      snapshot.forEach((doc) => {
-        const d = doc.data();
-        commentsData.push({
-          id: doc.id,
-          postId: d.postId || postId,
-          content: d.content || '',
-          authorId: d.authorId || '',
-          authorName: d.authorName || '',
-          authorEmail: d.authorEmail || '',
-          authorAvatar: d.authorAvatar || '',
-          createdAt: d.createdAt
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const commentsData: Comment[] = [];
+        snapshot.forEach((doc) => {
+          const d = doc.data();
+          commentsData.push({
+            id: doc.id,
+            postId: d.postId || postId,
+            content: d.content || '',
+            authorId: d.authorId || '',
+            authorName: d.authorName || '',
+            authorEmail: d.authorEmail || '',
+            authorAvatar: d.authorAvatar || '',
+            createdAt: d.createdAt
+          });
         });
+        setComments(commentsData);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, `posts/${postId}/comments`);
       });
-      setComments(commentsData);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, `posts/${postId}/comments`);
-    });
 
-    return () => unsubscribe();
-  }, [postId]);
+      return () => unsubscribe();
+    }
+  }, [postId, isSandboxMode]);
 
   // Handle comment submit
   const handleCommentSubmit = async (e: FormEvent) => {
@@ -682,6 +874,28 @@ function PostCommentsSection({ postId, currentUser, isAdmin, triggerToast }: Pos
 
     setIsSubmittingComment(true);
     try {
+      if (isSandboxMode) {
+        const stored = localStorage.getItem(`siyam_sandbox_comments_${postId}`);
+        const list = stored ? JSON.parse(stored) : [];
+        const newComment: Comment = {
+          id: `c_${Date.now()}`,
+          postId,
+          content: newCommentText.trim(),
+          authorId: currentUser.uid,
+          authorName: currentUser.displayName || 'Anonymous Developer',
+          authorEmail: currentUser.email || '',
+          authorAvatar: currentUser.photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUser.email || 'Siyam'}`,
+          createdAt: new Date().toISOString()
+        };
+        
+        const nextList = [...list, newComment];
+        localStorage.setItem(`siyam_sandbox_comments_${postId}`, JSON.stringify(nextList));
+        window.dispatchEvent(new Event(`siyam_sandbox_comments_update_${postId}`));
+        setNewCommentText('');
+        setIsSubmittingComment(false);
+        return;
+      }
+
       const commentDocRef = doc(collection(db, 'posts', postId, 'comments'));
       const newComment = {
         id: commentDocRef.id,
@@ -705,9 +919,23 @@ function PostCommentsSection({ postId, currentUser, isAdmin, triggerToast }: Pos
 
   // Handle comment delete
   const handleDeleteComment = async (commentId: string) => {
+    if (isSandboxMode) {
+      if (!window.confirm('Delete this comment from local Sandbox?')) return;
+      const stored = localStorage.getItem(`siyam_sandbox_comments_${postId}`);
+      if (stored) {
+        const list = JSON.parse(stored);
+        const nextList = list.filter((c: Comment) => c.id !== commentId);
+        localStorage.setItem(`siyam_sandbox_comments_${postId}`, JSON.stringify(nextList));
+        window.dispatchEvent(new Event(`siyam_sandbox_comments_update_${postId}`));
+        triggerToast('Comment Deleted', 'Mock comment deleted from local viewport.', 'success');
+      }
+      return;
+    }
+
     if (!window.confirm('Delete this comment?')) return;
     try {
       await deleteDoc(doc(db, 'posts', postId, 'comments', commentId));
+      triggerToast('Comment Deleted', 'Cloud comment record permanently deleted.', 'success');
     } catch (err) {
       handleFirestoreError(err, OperationType.DELETE, `posts/${postId}/comments/${commentId}`);
     }
@@ -755,14 +983,18 @@ function PostCommentsSection({ postId, currentUser, isAdmin, triggerToast }: Pos
                   </div>
                   <p className="text-xs text-slate-300 font-sans break-words font-light">
                     {comm.content}
-                  </p>
+                   </p>
                   <p className="text-[9px] font-mono text-slate-500">
-                    {comm.createdAt 
-                      ? new Date(comm.createdAt.seconds * 1000).toLocaleTimeString(undefined, {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })
-                      : 'Sending...'}
+                    {(() => {
+                      if (!comm.createdAt) return 'Sending...';
+                      const date = typeof comm.createdAt === 'string'
+                        ? new Date(comm.createdAt)
+                        : (comm.createdAt.seconds ? new Date(comm.createdAt.seconds * 1000) : new Date());
+                      return date.toLocaleTimeString(undefined, {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      });
+                    })()}
                   </p>
                 </div>
               </div>
